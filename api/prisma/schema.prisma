@@ -43,6 +43,7 @@ model User {
   fullName   String  @db.VarChar(80)
   username   String  @unique @db.VarChar(80)
   avatarSeed String? @db.VarChar(32)
+  avatarKey  String? @db.VarChar(500)
   email      String  @unique @db.VarChar(100)
 
   passwordHash String    @db.VarChar(100)

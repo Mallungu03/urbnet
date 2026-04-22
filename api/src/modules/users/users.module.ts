@@ -10,11 +10,13 @@ import { GetFollowersUseCase } from './use-cases/get-followers.use-case';
 import { GetFollowingsUseCase } from './use-cases/get-followings.use-case';
 import { deleteAccountUseCase } from './use-cases/delete-account.use-case';
 import { UnfollowUseCase } from './use-cases/unfollow.use-case';
+import { UserAvatarStorageService } from './services/user-avatar-storage.service';
 
 @Module({
   controllers: [UsersController],
   providers: [
     UsersService,
+    UserAvatarStorageService,
     MyProfileUseCase,
     FindManyUsersUseCase,
     FindUniqueUserUseCase,

@@ -1,143 +1,113 @@
-<html lang='pt-br'>
-  <head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>Verificação Reporta</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Verificação Reporta</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: #f9fafb;
-        font-family: 'Inter', sans-serif;
-        color: #374151;
+    /* Reset básico para e-mail */
+    body, table, td, a { text-decoration: none !important; }
+    img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    table { border-collapse: collapse !important; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      background-color: #f9fafb;
+      font-family: 'Inter', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #f9fafb;
+      padding-bottom: 40px;
+    }
+
+    .main-content {
+      max-width: 520px;
+      margin: 40px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 600px) {
+      .main-content {
+        width: 95% !important;
+        margin: 20px auto !important;
       }
-
-      .container {
-        max-width: 520px; /* Aumentado para dar mais largura ao conteúdo */
-        margin: 30px auto;
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 40px 48px; /* Mais espaço nas laterais, menos topo/fundo */
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-        border: 1px solid #e5e7eb;
+      .content-padding {
+        padding: 30px 24px !important;
       }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main-content" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td class="content-padding" style="padding: 40px 48px;">
+          
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+              <td style="padding-bottom: 24px;">
+                <table cellpadding="0" cellspacing="0" role="presentation">
+                  <tr>
+                    <td style="background: #3b82f6; border-radius: 6px; width: 32px; height: 32px; text-align: center; vertical-align: middle;">
+                      <img src="https://img.icons8.com/material-rounded/24/ffffff/marker.png" width="18" height="18" alt="" style="display: block; margin: 0 auto;">
+                    </td>
+                    <td style="padding-left: 10px; font-weight: 600; font-size: 18px; color: #111827; letter-spacing: -0.5px;">
+                      Reporta
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
 
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 24px; /* Reduzido */
-      }
+          <h1 style="font-size: 22px; font-weight: 600; color: #111827; margin: 0 0 12px 0;">Verifique seu e-mail</h1>
+          <p style="font-size: 15px; line-height: 1.6; color: #4b5563; margin: 0 0 24px 0;">
+            Olá, <strong>{{fullName}}</strong>. Use o código abaixo para validar sua solicitação e ativar sua conta com segurança:
+          </p>
 
-      .logo-icon {
-        width: 28px;
-        height: 28px;
-        background: #3b82f6;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background: #f8fafc; border-radius: 12px; margin-bottom: 24px;">
+            <tr>
+              <td style="padding: 32px; text-align: center;">
+                <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #3b82f6; margin-bottom: 8px;">
+                  {{otp}}
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">
+                  Válido por 15 minutos
+                </div>
+              </td>
+            </tr>
+          </table>
 
-      .logo-text {
-        font-weight: 600;
-        font-size: 17px;
-        color: #111827;
-      }
+          <p style="font-size: 13px; color: #94a3b8; margin: 0; line-height: 1.5;">
+            Se você não solicitou este código, pode ignorar este e-mail com segurança. Outra pessoa pode ter digitado seu endereço por engano.
+          </p>
 
-      h1 {
-        font-size: 20px;
-        font-weight: 600;
-        color: #111827;
-        margin: 0 0 8px 0; /* Mais compacto */
-      }
+          <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #f1f5f9;">
+            <tr>
+              <td style="font-size: 12px; color: #94a3b8;">
+                &copy; 2026 Equipe Reporta
+              </td>
+              <td style="font-size: 12px; text-align: right;">
+                <a href="mailto:suporte@reporta.ao" style="color: #3b82f6; font-weight: 500;">Central de Suporte</a>
+              </td>
+            </tr>
+          </table>
 
-      p {
-        font-size: 15px;
-        line-height: 1.5;
-        color: #4b5563;
-        margin: 0 0 12px 0;
-      }
-
-      .otp-card {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 20px; /* Mais baixo */
-        text-align: center;
-        margin: 20px 0;
-      }
-
-      .otp-code {
-        font-size: 32px;
-        font-weight: 700;
-        letter-spacing: 6px;
-        color: #3b82f6;
-      }
-
-      .expiry {
-        font-size: 12px;
-        color: #94a3b8;
-        margin-top: 4px;
-      }
-
-      .footer {
-        margin-top: 24px;
-        padding-top: 20px;
-        border-top: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 12px;
-        color: #94a3b8;
-      }
-
-      .footer a {
-        color: #3b82f6;
-        text-decoration: none;
-      }
-
-      @media (max-width: 480px) {
-        .container {
-          margin: 10px;
-          padding: 24px;
-        }
-        .footer {
-          flex-direction: column;
-          gap: 8px;
-          text-align: center;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class='container'>
-      <div class='logo'>
-        <div class='logo-icon'>
-          <svg width='16' height='16' viewBox='0 0 24 24' fill='white'><path
-              d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'
-            /></svg>
-        </div>
-        <span class='logo-text'>Reporta</span>
-      </div>
-
-      <h1>Verifique seu e-mail</h1>
-      <p>Olá, {{fullName}}. Use o código abaixo para ativar sua conta:</p>
-
-      <div class='otp-card'>
-        <div class='otp-code'>{{otp}}</div>
-        <div class='expiry'>Válido por 15 minutos</div>
-      </div>
-
-      <p style='font-size: 13px; color: #94a3b8; margin-bottom: 0;'>
-        Se não solicitou este código, ignore este e-mail.
-      </p>
-
-      <div class='footer'>
-        <span>&copy; 2026 Equipe Reporta</span>
-        <a href='mailto:suporte@reporta.ao'>Suporte</a>
-      </div>
-    </div>
-  </body>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
 </html>

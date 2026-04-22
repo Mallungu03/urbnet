@@ -1,16 +1,11 @@
-import { Type } from 'class-transformer';
-import { IsLatitude, IsLongitude, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsLatitude, IsLongitude, IsNotEmpty } from 'class-validator';
 
 export class CreateProximityAlertDto {
-  @Type(() => Number)
-  @IsNumber()
   @IsLatitude()
   @IsNotEmpty()
-  latitude;
+  latitude: number;
 
-  @Type(() => Number)
-  @IsNumber()
   @IsLongitude()
   @IsNotEmpty()
-  longitude;
+  longitude: number;
 }

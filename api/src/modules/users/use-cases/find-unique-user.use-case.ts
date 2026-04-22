@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import { buildAvatarUrl, buildAvatarValue } from '../utils/user-avatar-response.util';
 
 @Injectable()
 export class FindUniqueUserUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userAvatarStorage: UserAvatarStorageService,
+  ) {}
 
   async execute(id: string) {
     const userAlreadExistis = await this.prisma.user.findFirst({
@@ -24,7 +29,16 @@ export class FindUniqueUserUseCase {
       name: userAlreadExistis.fullName,
       username: userAlreadExistis.username,
       email: userAlreadExistis.email,
-      avatar: userAlreadExistis.avatarSeed,
+      avatar: buildAvatarValue(
+        userAlreadExistis.avatarSeed,
+        userAlreadExistis.avatarKey,
+        this.userAvatarStorage,
+      ),
+      avatarSeed: userAlreadExistis.avatarSeed,
+      avatarUrl: buildAvatarUrl(
+        userAlreadExistis.avatarKey,
+        this.userAvatarStorage,
+      ),
     };
   }
 }

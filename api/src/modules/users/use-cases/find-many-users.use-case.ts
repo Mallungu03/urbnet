@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { FindManyQueryDto } from '@/shared/queries/find-many.query';
+import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import { buildAvatarUrl } from '../utils/user-avatar-response.util';
 
 @Injectable()
 export class FindManyUsersUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userAvatarStorage: UserAvatarStorageService,
+  ) {}
 
   async execute(query: FindManyQueryDto) {
     const page = query.page ?? 1;
@@ -40,6 +45,7 @@ export class FindManyUsersUseCase {
           username: true,
           email: true,
           avatarSeed: true,
+          avatarKey: true,
           createdAt: true,
         },
       }),
@@ -52,6 +58,7 @@ export class FindManyUsersUseCase {
         username: user.username,
         email: user.email,
         avatarSeed: user.avatarSeed,
+        avatarUrl: buildAvatarUrl(user.avatarKey, this.userAvatarStorage),
         createdAt: user.createdAt,
       })),
       meta: {

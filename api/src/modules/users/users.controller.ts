@@ -9,7 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  ParseFilePipeBuilder,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
@@ -58,12 +62,23 @@ export class UsersController {
 
   @HttpCode(HttpStatus.OK)
   @Patch(':id')
+  @UseInterceptors(FileInterceptor('avatar'))
   update(
     @CurrentUser() user: IJwtPayload,
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ })
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 })
+        .build({
+          fileIsRequired: false,
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file?: Express.Multer.File,
   ) {
-    return this.updateUserUseCase.execute(user.sub, id, updateUserDto);
+    return this.updateUserUseCase.execute(user.sub, id, updateUserDto, file);
   }
 
   @HttpCode(HttpStatus.OK)

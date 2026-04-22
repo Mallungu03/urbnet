@@ -24,12 +24,15 @@ import { FindUniqueReportUseCase } from './use-cases/find-unique-report.use-case
 import { FindManyQueryDto } from '@/shared/queries/find-many.query';
 import { FindManyReportsUseCase } from './use-cases/find-many-reports.use-case';
 import { ConfirmReportUseCase } from './use-cases/confirm-report.use-case';
+import { UpdateReportDto } from './dto/update-report.dto';
+import { UpdateReportUseCase } from './use-cases/update-report.use-case';
 
 @Controller('reports')
 export class ReportsController {
   constructor(
     private readonly confirmReportUseCase: ConfirmReportUseCase,
     private readonly createReportUseCase: CreateReportUseCase,
+    private readonly updateReportUseCase: UpdateReportUseCase,
     private readonly deleteReportUseCase: DeleteReportUseCase,
     private readonly findUniqueReportUseCase: FindUniqueReportUseCase,
     private readonly findManyReportsUseCase: FindManyReportsUseCase,
@@ -60,7 +63,27 @@ export class ReportsController {
     return this.findManyReportsUseCase.execute(query);
   }
 
-  @Get('find-unique')
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('image'))
+  update(
+    @CurrentUser() user: IJwtPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateReportDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ })
+        .addMaxSizeValidator({ maxSize: 10 * 1024 * 1024 })
+        .build({
+          fileIsRequired: false,
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file?: Express.Multer.File,
+  ) {
+    return this.updateReportUseCase.execute(user.sub, id, dto, file);
+  }
+
+  @Get(':id')
   async findUnique(@Param('id', ParseUUIDPipe) id: string) {
     return await this.findUniqueReportUseCase.execute(id);
   }

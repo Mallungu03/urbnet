@@ -54,6 +54,54 @@ export class AlertRadiusService {
     return alertZone ?? null;
   }
 
+  async upsertAlertZone(
+    reportId: string,
+    latitude: number,
+    longitude: number,
+    radiusMeters = AlertRadiusService.DEFAULT_RADIUS_METERS,
+  ) {
+    const [alertZone] = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        reportId: string;
+        radiusMeters: number;
+        totalNotified: number;
+        createdAt: Date;
+      }>
+    >`
+      INSERT INTO "AlertZone" ("reportId", "center", "radiusMeters", "totalNotified")
+      VALUES (
+        ${reportId},
+        ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326),
+        ${radiusMeters},
+        0
+      )
+      ON CONFLICT ("reportId") DO UPDATE
+      SET
+        "center" = EXCLUDED."center",
+        "radiusMeters" = EXCLUDED."radiusMeters",
+        "deactivatedAt" = NULL,
+        "updatedAt" = NOW()
+      RETURNING "id", "reportId", "radiusMeters", "totalNotified", "createdAt"
+    `;
+
+    return alertZone ?? null;
+  }
+
+  async deactivateAlertZoneByReportId(reportId: string) {
+    const [alertZone] = await this.prisma.$queryRaw<Array<{ id: string }>>`
+      UPDATE "AlertZone"
+      SET
+        "deactivatedAt" = NOW(),
+        "updatedAt" = NOW()
+      WHERE "reportId" = ${reportId}
+        AND "deactivatedAt" IS NULL
+      RETURNING "id"
+    `;
+
+    return alertZone ?? null;
+  }
+
   async notifyUsersNearAlertZone(
     alertZoneId: string,
     reportId: string,

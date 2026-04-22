@@ -30,4 +30,34 @@ export class ReportListener {
       alertZone.radiusMeters,
     );
   }
+
+  @OnEvent('report.updated-risk')
+  async syncAlertZone(payload: {
+    reportId: string;
+    latitude: number;
+    longitude: number;
+  }) {
+    const alertZone = await this.alertRadiusService.upsertAlertZone(
+      payload.reportId,
+      payload.latitude,
+      payload.longitude,
+    );
+
+    if (!alertZone) {
+      return;
+    }
+
+    await this.alertRadiusService.notifyUsersNearAlertZone(
+      alertZone.id,
+      payload.reportId,
+      payload.latitude,
+      payload.longitude,
+      alertZone.radiusMeters,
+    );
+  }
+
+  @OnEvent('report.deactivated-risk')
+  async deactivateAlertZone(payload: { reportId: string }) {
+    await this.alertRadiusService.deactivateAlertZoneByReportId(payload.reportId);
+  }
 }

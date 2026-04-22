@@ -60,11 +60,34 @@ export class FindManyReportsUseCase {
       },
     );
 
+    const reportsWithLocation = await Promise.all(
+      reports.map(async (report) => {
+        const [location] = await this.prisma.$queryRaw<
+          Array<{ latitude: number; longitude: number }>
+        >`
+          SELECT
+            ST_Y("location")::double precision AS "latitude",
+            ST_X("location")::double precision AS "longitude"
+          FROM "Report"
+          WHERE "id" = ${report.id}
+          LIMIT 1
+        `;
+
+        return {
+          ...report,
+          latitude: location?.latitude ?? null,
+          longitude: location?.longitude ?? null,
+        };
+      }),
+    );
+
     return {
-      data: reports.map((report) => ({
+      data: reportsWithLocation.map((report) => ({
         id: report.id,
         confirmations: report.totalConfirmations,
         categoryId: report.categoryId,
+        latitude: report.latitude,
+        longitude: report.longitude,
         image: report.media[0]
           ? {
               key: report.media[0].s3Key,

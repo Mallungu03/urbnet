@@ -24,6 +24,17 @@ export class FindUniqueReportUseCase {
       throw new NotFoundException('Report não encontrado.');
     }
 
+    const [location] = await this.prisma.$queryRaw<
+      Array<{ latitude: number; longitude: number }>
+    >`
+      SELECT
+        ST_Y("location")::double precision AS "latitude",
+        ST_X("location")::double precision AS "longitude"
+      FROM "Report"
+      WHERE "id" = ${report.id}
+      LIMIT 1
+    `;
+
     const user = await this.prisma.user.findFirst({
       where: { id: report.userId, deletedAt: null, isBanned: false },
     });
@@ -33,6 +44,8 @@ export class FindUniqueReportUseCase {
       userId: user?.id,
       categoryId: report.categoryId,
       content: report.content,
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
       image: report.media[0]
         ? {
             key: report.media[0].s3Key,

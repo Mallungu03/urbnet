@@ -8,18 +8,27 @@ import {
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { AuditLogService } from '@/shared/audit/audit-log.service';
+import sharp from 'sharp';
+import { randomUUID } from 'node:crypto';
+import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import {
+  buildAvatarUrl,
+  buildAvatarValue,
+} from '../utils/user-avatar-response.util';
 
 @Injectable()
 export class UpdateUserUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLog: AuditLogService,
+    private readonly userAvatarStorage: UserAvatarStorageService,
   ) {}
 
   async execute(
     authId: string,
     targetId: string,
     updateUserDto: UpdateUserDto,
+    file?: Express.Multer.File,
   ) {
     if (authId !== targetId) {
       throw new ForbiddenException('Só podes atualizar o teu próprio perfil.');
@@ -33,22 +42,29 @@ export class UpdateUserUseCase {
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
-    const avatarSeed = String(updateUserDto.avatarSeed);
-    const fullName = String(updateUserDto.fullName);
-    const username = String(updateUserDto.username);
+    const avatarSeed = updateUserDto.avatarSeed?.trim();
+    const fullName = updateUserDto.fullName?.trim();
+    const username = updateUserDto.username?.trim();
 
     const dataToUpdate: {
       avatarSeed?: string;
+      avatarKey?: string | null;
       fullName?: string;
       username?: string;
     } = {};
 
+    const changedFields: string[] = [];
+    let nextAvatarFileKey: string | null = null;
+    let previousAvatarKeyToDelete: string | null = null;
+
     if (fullName !== undefined) {
       dataToUpdate.fullName = fullName;
+      changedFields.push('fullName');
     }
 
     if (avatarSeed !== undefined) {
       dataToUpdate.avatarSeed = avatarSeed;
+      changedFields.push('avatarSeed');
     }
 
     if (username !== undefined) {
@@ -56,6 +72,26 @@ export class UpdateUserUseCase {
         username,
         userAlreadExistis.id,
       );
+      changedFields.push('username');
+    }
+
+    if (file?.buffer) {
+      const image = sharp(file.buffer);
+      const optimizedBuffer = await image
+        .resize({
+          width: 800,
+          height: 800,
+          fit: 'cover',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 82 })
+        .toBuffer();
+
+      nextAvatarFileKey = `avatars/${userAlreadExistis.id}/${randomUUID()}.jpg`;
+      await this.userAvatarStorage.saveAvatar(nextAvatarFileKey, optimizedBuffer);
+      dataToUpdate.avatarKey = nextAvatarFileKey;
+      previousAvatarKeyToDelete = userAlreadExistis.avatarKey;
+      changedFields.push('avatar');
     }
 
     if (!Object.keys(dataToUpdate).length) {
@@ -64,10 +100,27 @@ export class UpdateUserUseCase {
       );
     }
 
-    const user = await this.prisma.user.update({
-      where: { id: userAlreadExistis.id },
-      data: dataToUpdate,
-    });
+    const user = await (async () => {
+      try {
+        return await this.prisma.user.update({
+          where: { id: userAlreadExistis.id },
+          data: dataToUpdate,
+        });
+      } catch (error) {
+        if (nextAvatarFileKey) {
+          await this.userAvatarStorage.deleteAvatar(nextAvatarFileKey);
+        }
+
+        throw error;
+      }
+    })();
+
+    if (
+      previousAvatarKeyToDelete &&
+      previousAvatarKeyToDelete !== nextAvatarFileKey
+    ) {
+      await this.userAvatarStorage.deleteAvatar(previousAvatarKeyToDelete);
+    }
 
     await this.auditLog.create({
       action: 'user_profile_updated',
@@ -76,13 +129,19 @@ export class UpdateUserUseCase {
       actorId: user.id,
       message: 'Perfil atualizado.',
       payload: {
-        fields: Object.keys(dataToUpdate),
+        fields: changedFields,
       },
     });
 
     return {
       id: user.id,
+      avatar: buildAvatarValue(
+        user.avatarSeed,
+        user.avatarKey,
+        this.userAvatarStorage,
+      ),
       avatarSeed: user.avatarSeed,
+      avatarUrl: buildAvatarUrl(user.avatarKey, this.userAvatarStorage),
       email: user.email,
       fullName: user.fullName,
       username: user.username,
