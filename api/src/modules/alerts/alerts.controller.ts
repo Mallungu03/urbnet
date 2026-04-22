@@ -27,8 +27,7 @@ export class AlertsController {
     @CurrentUser() user: IJwtPayload,
     @Body() param: CreateProximityAlertDto,
   ) {
-    const publicId = user.sub;
-    return this.createProximityAlertUseCase.execute(publicId, param);
+    return this.createProximityAlertUseCase.execute(user.sub, param);
   }
 
   @Get('find-many')
@@ -37,13 +36,11 @@ export class AlertsController {
     @Query('page', ParseIntPipe) page?: number,
     @Query('limit', ParseIntPipe) limit?: number,
   ) {
-    const publicId = user.sub;
-    return this.findManyUseCase.execute(publicId, { page, limit });
+    return this.findManyUseCase.execute(user.sub, { page, limit });
   }
 
   @Get(':id')
   findUnique(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
-    return this.findUniqueUseCase.execute(publicId, id);
+    return this.findUniqueUseCase.execute(user.sub, id);
   }
 }

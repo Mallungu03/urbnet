@@ -4,9 +4,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { EnvService } from '@/shared/config/env.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
+import { EnvService } from '@/config/env/env.service';
 
 @Injectable()
 export class JwtStrategy {
@@ -28,7 +28,7 @@ export class JwtStrategy {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { publicId: payload.sub },
+      where: { id: payload.sub },
     });
 
     if (!user || user.deletedAt) {

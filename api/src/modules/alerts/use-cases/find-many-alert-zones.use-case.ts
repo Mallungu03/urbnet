@@ -5,8 +5,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 export class FindManyAlertZonesUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(publicId: string, query: { page?: number; limit?: number }) {
-    const user = await this.prisma.user.findUnique({ where: { publicId } });
+  async execute(userId: string, query: { page?: number; limit?: number }) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException();
     }
@@ -15,7 +15,7 @@ export class FindManyAlertZonesUseCase {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where = { deactivatedAt: null, publicId };
+    const where = { deactivatedAt: null };
 
     const { total, alertZone } = await this.prisma.$transaction(
       async (prisma) => {
@@ -27,7 +27,7 @@ export class FindManyAlertZonesUseCase {
           take: limit,
           orderBy: { createdAt: 'desc' },
           select: {
-            publicId: true,
+            id: true,
             reportId: true,
             createdAt: true,
             totalNotified: true,
@@ -40,13 +40,8 @@ export class FindManyAlertZonesUseCase {
 
     return {
       data: alertZone.map((alertZone) => ({
-        id: alertZone.publicId,
-        reportId: async () => {
-          const report = await this.prisma.report.findUnique({
-            where: { id: alertZone.reportId },
-          });
-          return report?.publicId;
-        },
+        id: alertZone.id,
+        reportId: alertZone.reportId,
         createdAt: alertZone.createdAt,
         totalNotified: alertZone.totalNotified,
       })),

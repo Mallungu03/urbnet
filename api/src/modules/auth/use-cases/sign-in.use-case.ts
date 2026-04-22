@@ -8,7 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
 import { SignInDto } from '../dto/sign-in.dto';
 import * as argon2 from 'argon2';
-import { PrismaService } from '@/config/db/prisma.service';
+import { PrismaService } from '@/shared/prisma/prisma.service';
 
 @Injectable()
 export class SignInUseCase {
@@ -56,7 +56,6 @@ export class SignInUseCase {
       {
         userId: userAllreadyExists.id,
         email: userAllreadyExists.email,
-        publicId: userAllreadyExists.publicId,
         role: userAllreadyExists.role,
       },
       deviceInfo,

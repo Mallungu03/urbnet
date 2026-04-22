@@ -19,20 +19,17 @@ export class NotificationController {
 
   @Get('find-many')
   findMany(@CurrentUser() user: IJwtPayload) {
-    const publicId = user.sub;
-    return this.getManyUseCase.execute(publicId);
+    return this.getManyUseCase.execute(user.sub);
   }
 
   @Get(':id')
   findUnique(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
-    return this.findUniqueUseCase.execute(publicId, +id);
+    return this.findUniqueUseCase.execute(user.sub, +id);
   }
 
   @Patch('mark-read/:id')
   markRead(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
-    return this.markReadUseCase.execute(publicId, +id);
+    return this.markReadUseCase.execute(user.sub, +id);
   }
 
   @Patch('mark-all-read')
@@ -43,7 +40,6 @@ export class NotificationController {
 
   @Delete('delete')
   async delete(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
-    return this.deleteUseCase.execute(publicId, +id);
+    return this.deleteUseCase.execute(user.sub, +id);
   }
 }

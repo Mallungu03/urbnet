@@ -35,7 +35,7 @@ export class FindManyUsersUseCase {
         take: limit,
         orderBy: { createdAt: 'desc' },
         select: {
-          publicId: true,
+          id: true,
           fullName: true,
           username: true,
           email: true,
@@ -47,7 +47,7 @@ export class FindManyUsersUseCase {
 
     return {
       data: users.map((user) => ({
-        id: user.publicId,
+        id: user.id,
         fullName: user.fullName,
         username: user.username,
         email: user.email,

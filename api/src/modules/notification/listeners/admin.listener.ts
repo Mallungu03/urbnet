@@ -17,7 +17,6 @@ export class AdminListener {
       body: `Olá ${payload.fullName}, por algum motivo, foste banido  e não estás autorizado a utilizar a Reporta!. Caso seja indevido, entre em contacto com o suporte`,
       template: 'baned-user',
       templateData: { fullName: payload.fullName, email: payload.email },
-      type: 'baned_user',
     });
   }
 
@@ -35,7 +34,6 @@ export class AdminListener {
       body: `Olá ${payload.fullName}, deixaste de ser banido  e já estás autorizado a utilizar a Reporta!.`,
       template: 'unbaned-user',
       templateData: { fullName: payload.fullName, email: payload.email },
-      type: 'unbaned_user',
     });
   }
 }

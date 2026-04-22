@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SignOutDto } from '../dto/sign-out.dto';
-import { PrismaService } from '@/config/db/prisma.service';
+import { PrismaService } from '@/shared/prisma/prisma.service';
 
 @Injectable()
 export class SignOutUseCase {
@@ -8,7 +8,7 @@ export class SignOutUseCase {
 
   async execute(id: string, signOutDto: SignOutDto) {
     const userAlreadyExists = await this.prisma.user.findUnique({
-      where: { publicId: id },
+      where: { id },
     });
     if (!userAlreadyExists) {
       throw new NotFoundException('Utilizador não encontrado.');

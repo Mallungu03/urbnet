@@ -4,7 +4,7 @@ import * as argon2 from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
-import { EnvService } from '@/shared/config/env.service';
+import { EnvService } from '@/config/env/env.service';
 import { DeviceSessionDto } from './dto/device-session.dto';
 
 @Injectable()
@@ -19,7 +19,6 @@ export class AuthService {
     dto: {
       userId: string;
       email: string;
-      publicId: string;
       role: string;
     },
     deviceDto: DeviceSessionDto,
@@ -27,7 +26,7 @@ export class AuthService {
     const jti = uuidv4();
 
     const payload: IJwtPayload = {
-      sub: dto.publicId,
+      sub: dto.userId,
       email: dto.email,
       role: dto.role,
       jti,

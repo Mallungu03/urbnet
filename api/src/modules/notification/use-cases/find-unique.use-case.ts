@@ -4,8 +4,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 @Injectable()
 export class FindUniqueUseCase {
   constructor(private readonly prisma: PrismaService) {}
-  async execute(publicId: string, id: number) {
-    const user = await this.prisma.user.findUnique({ where: { publicId } });
+  async execute(userId: string, id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundException();

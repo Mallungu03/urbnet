@@ -91,13 +91,12 @@ export class ResetPasswordUseCase {
         userId: user.id,
         email: user.email,
         role: user.role,
-        publicId: user.publicId,
       },
       resetPasswordDto,
     );
 
     return {
-      id: user.publicId,
+      id: user.id,
       email: user.email,
       fullName: user.fullName,
       username: user.username,

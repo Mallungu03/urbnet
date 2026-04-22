@@ -55,7 +55,7 @@ export class resendOtpCodeUseCase {
     });
 
     return {
-      id: userAlreadExistis.publicId,
+      id: userAlreadExistis.id,
       email: userAlreadExistis.email,
       fullName: userAlreadExistis.fullName,
       username: userAlreadExistis.username,

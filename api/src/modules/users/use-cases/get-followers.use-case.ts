@@ -5,10 +5,10 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 export class GetFollowersUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(publicId: string) {
+  async execute(userId: string) {
     const user = await this.prisma.user.findFirst({
       where: {
-        publicId,
+        id: userId,
         deletedAt: null,
         verifiedAt: { not: null },
         isBanned: false,
@@ -25,7 +25,7 @@ export class GetFollowersUseCase {
         include: {
           follower: {
             select: {
-              publicId: true,
+              id: true,
               fullName: true,
               username: true,
               avatarSeed: true,
@@ -38,7 +38,7 @@ export class GetFollowersUseCase {
           id: follow.id,
           createdAt: follow.createdAt,
           follower: {
-            id: follow.follower.publicId,
+            id: follow.follower.id,
             fullName: follow.follower.fullName,
             username: follow.follower.username,
             avatarSeed: follow.follower.avatarSeed,

@@ -75,17 +75,15 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   @Post(':id/follow')
   follow(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
     const followingId = id;
-    return this.followUseCase.execute(publicId, followingId);
+    return this.followUseCase.execute(user.sub, followingId);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post(':id/unfollow')
   unfollow(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
-    const publicId = user.sub;
     const followingId = id;
-    return this.unfollowUseCase.execute(publicId, followingId);
+    return this.unfollowUseCase.execute(user.sub, followingId);
   }
 
   @HttpCode(HttpStatus.OK)

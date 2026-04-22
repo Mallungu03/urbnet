@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { EnvService } from './shared/config/env.service';
+import { EnvService } from './config/env/env.service';
 import helmet from 'helmet';
 import compression from 'compression';
 

@@ -18,12 +18,12 @@ export class CreateReportUseCase {
   ) {}
 
   async execute(
-    publicId: string,
+    userId: string,
     dto: CreateReportDto,
     file: Express.Multer.File,
   ) {
     const user = await this.prisma.user.findFirst({
-      where: { publicId, isBanned: false, deletedAt: null },
+      where: { id: userId, isBanned: false, deletedAt: null },
     });
 
     if (!user) {
@@ -58,13 +58,12 @@ export class CreateReportUseCase {
     const width = metadata.width ?? null;
     const height = metadata.height ?? null;
     const fileSizeKb = Math.ceil(optimizedBuffer.length / 1024);
-    const fileKey = `reports/${publicId}/${randomUUID()}.jpg`;
+    const fileKey = `reports/${userId}/${randomUUID()}.jpg`;
 
     const report = await this.prisma.$transaction(async (prisma) => {
       const [createdReport] = await prisma.$queryRaw<
         Array<{
           id: string;
-          publicId: string;
           createdAt: Date;
           totalConfirmations: number;
         }>
@@ -76,7 +75,7 @@ export class CreateReportUseCase {
             ${content},
             ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)
           )
-          RETURNING "id", "publicId", "createdAt", "totalConfirmations"
+          RETURNING "id", "createdAt", "totalConfirmations"
         `;
 
       await prisma.reportMedia.create({
@@ -120,7 +119,7 @@ export class CreateReportUseCase {
     }
 
     return {
-      id: report.publicId,
+      id: report.id,
       categoryId,
       confirmations: report.totalConfirmations,
       latitude,

@@ -98,13 +98,12 @@ export class VerifyUseCase {
         userId: user.id,
         email: user.email,
         role: user.role,
-        publicId: user.publicId,
       },
       deviceInfo,
     );
 
     return {
-      id: user.publicId,
+      id: user.id,
       email: user.email,
       fullName: user.fullName,
       username: user.username,

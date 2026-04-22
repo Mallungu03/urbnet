@@ -78,7 +78,6 @@ export class ReportsController {
     @CurrentUser() user: IJwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const publicId = user.sub;
-    return await this.deleteReportUseCase.execute(publicId, id);
+    return await this.deleteReportUseCase.execute(user.sub, id);
   }
 }

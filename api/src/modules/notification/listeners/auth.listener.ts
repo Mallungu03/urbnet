@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from '../notification.service';
-import {
-  NotificationChannel,
-  NotificationType,
-} from '@/generated/prisma/enums';
+import { NotificationChannel } from '@/generated/prisma/enums';
 
 @Injectable()
 export class AuthListener {
@@ -21,7 +18,6 @@ export class AuthListener {
       .send({
         userId: payload.userId,
         title: 'Verificação de email — Reporta Team',
-        type: NotificationType.user_registered,
         body: `Olá ${payload.fullName}, o seu código de verificação é: ${payload.otp}. Válido por 15 minutos.`,
         channel: [NotificationChannel.email],
         template: 'user-registered',
@@ -66,7 +62,6 @@ export class AuthListener {
       body: `Olá ${payload.fullName}, o teu novo código de verificação é ${payload.otp}.`,
       channel: [NotificationChannel.email],
       template: 'otp-resent',
-      type: 'otp-resent',
       templateData: { fullName: payload.fullName, otp: payload.otp },
       email: payload.email,
     });
@@ -85,7 +80,6 @@ export class AuthListener {
       body: `Olá ${payload.fullName}, usa o código ${payload.otp} para redefinir a tua palavra-passe.`,
       channel: [NotificationChannel.email],
       template: 'forgot-password',
-      type: 'forgot-password',
       templateData: { fullName: payload.fullName, otp: payload.otp },
       email: payload.email,
     });
@@ -103,7 +97,6 @@ export class AuthListener {
       body: `Olá ${payload.fullName}, a tua palavra-passe foi redefinida com sucesso.`,
       channel: [NotificationChannel.email],
       template: 'password-reset',
-      type: 'password-reset',
       templateData: { fullName: payload.fullName },
       email: payload.email,
     });

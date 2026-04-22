@@ -7,7 +7,7 @@ export class FindUniqueReportUseCase {
 
   async execute(id: string) {
     const report = await this.prisma.report.findFirst({
-      where: { publicId: id, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!report) {
@@ -19,8 +19,8 @@ export class FindUniqueReportUseCase {
     });
 
     return {
-      id: report.publicId,
-      userId: user?.publicId,
+      id: report.id,
+      userId: user?.id,
       categoryId: report.categoryId,
       content: report.content,
       createdAt: report.createdAt,

@@ -22,7 +22,7 @@ export class UpdateUserUseCase {
     }
 
     const userAlreadExistis = await this.prisma.user.findUnique({
-      where: { publicId: authId },
+      where: { id: authId },
     });
 
     if (!userAlreadExistis) {
@@ -76,7 +76,7 @@ export class UpdateUserUseCase {
     });
 
     return {
-      id: user.publicId,
+      id: user.id,
       avatarSeed: user.avatarSeed,
       email: user.email,
       fullName: user.fullName,

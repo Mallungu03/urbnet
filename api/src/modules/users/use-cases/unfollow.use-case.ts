@@ -5,9 +5,9 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 export class UnfollowUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(publicId: string, followingId: string) {
+  async execute(userId: string, followingId: string) {
     const follower = await this.prisma.user.findUnique({
-      where: { publicId },
+      where: { id: userId },
     });
 
     if (!follower) {
@@ -16,7 +16,7 @@ export class UnfollowUseCase {
 
     const following = await this.prisma.user.findFirst({
       where: {
-        publicId: followingId,
+        id: followingId,
         deletedAt: null,
         verifiedAt: { not: null },
         isBanned: false,

@@ -14,9 +14,9 @@ export class FollowUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(publicId: string, followingId: string) {
+  async execute(userId: string, followingId: string) {
     const follower = await this.prisma.user.findUnique({
-      where: { publicId },
+      where: { id: userId },
     });
 
     if (!follower) {
@@ -25,7 +25,7 @@ export class FollowUseCase {
 
     const following = await this.prisma.user.findFirst({
       where: {
-        publicId: followingId,
+        id: followingId,
         deletedAt: null,
         verifiedAt: { not: null },
         isBanned: false,
@@ -67,15 +67,15 @@ export class FollowUseCase {
     this.eventEmitter.emit('user.followed', {
       userId: following.id,
       followerName: follower.fullName,
-      followerId: follower.publicId,
+      followerId: follower.id,
       email: following.email,
       fullName: following.fullName,
     });
 
     return {
       id: follow.id,
-      followerId: follower.publicId,
-      followingId: following.publicId,
+      followerId: follower.id,
+      followingId: following.id,
       createdAt: follow.createdAt,
     };
   }

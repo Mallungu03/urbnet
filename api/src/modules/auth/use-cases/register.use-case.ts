@@ -52,7 +52,6 @@ export class RegisterUseCase {
 
       return {
         id: createdUser.id,
-        publicId: createdUser.publicId,
         email: createdUser.email,
         fullName: createdUser.fullName,
         username: createdUser.username,
@@ -71,7 +70,7 @@ export class RegisterUseCase {
       data: {
         action: 'user_registered',
         entityType: 'user',
-        entityId: user.publicId,
+        entityId: user.id,
         actorType: 'system',
         payload: {
           email: user.email,
@@ -81,7 +80,7 @@ export class RegisterUseCase {
     });
 
     return {
-      id: user.publicId,
+      id: user.id,
       email: user.email,
       fullName: user.fullName,
       username: user.username,

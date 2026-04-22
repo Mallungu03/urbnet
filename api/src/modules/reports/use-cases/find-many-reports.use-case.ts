@@ -33,9 +33,9 @@ export class FindManyReportsUseCase {
           take: limit,
           select: {
             content: true,
-            publicId: true,
+            id: true,
             createdAt: true,
-            confirmations: true,
+            totalConfirmations: true,
             userId: true,
             categoryId: true,
           },
@@ -47,8 +47,8 @@ export class FindManyReportsUseCase {
 
     return {
       data: reports.map((report) => ({
-        id: report.publicId,
-        confirmations: report.confirmations,
+        id: report.id,
+        confirmations: report.totalConfirmations,
         categoryId: report.categoryId,
         createdAt: report.createdAt,
       })),

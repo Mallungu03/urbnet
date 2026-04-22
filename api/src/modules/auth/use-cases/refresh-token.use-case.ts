@@ -1,4 +1,4 @@
-import { EnvService } from '@/shared/config/env.service';
+import { EnvService } from '@/config/env/env.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -30,7 +30,7 @@ export class RefreshTokenUseCase {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { publicId: payload.sub },
+      where: { id: payload.sub },
     });
 
     if (!user) {
@@ -94,7 +94,6 @@ export class RefreshTokenUseCase {
       {
         userId: user.id,
         email: user.email,
-        publicId: user.publicId,
         role: user.role,
       },
       deviceInfo,

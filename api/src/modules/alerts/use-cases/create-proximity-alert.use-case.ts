@@ -9,8 +9,8 @@ export class CreateProximityAlertUseCase {
     private readonly prisma: PrismaService,
     private readonly alertRadiusService: AlertRadiusService,
   ) {}
-  async execute(publicId: string, param: CreateProximityAlertDto) {
-    const user = await this.prisma.user.findUnique({ where: { publicId } });
+  async execute(userId: string, param: CreateProximityAlertDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException();
     }

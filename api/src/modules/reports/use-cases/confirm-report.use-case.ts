@@ -13,9 +13,9 @@ export class ConfirmReportUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(publicId: string, id: string) {
+  async execute(userId: string, id: string) {
     const user = await this.prisma.user.findFirst({
-      where: { publicId, isBanned: false, deletedAt: null },
+      where: { id: userId, isBanned: false, deletedAt: null },
     });
 
     if (!user) {
@@ -23,7 +23,7 @@ export class ConfirmReportUseCase {
     }
 
     const report = await this.prisma.report.findFirst({
-      where: { publicId: id, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!report) {
@@ -40,26 +40,26 @@ export class ConfirmReportUseCase {
       });
 
       return await prisma.report.update({
-        where: { publicId: id },
+        where: { id },
         data: { totalConfirmations: { increment: 1 } },
         include: {
-          user: { select: { publicId: true, email: true, fullName: true } },
+          user: { select: { id: true, email: true, fullName: true } },
         },
       });
     });
 
     this.eventEmitter.emit('report.confirmed', {
-      userId: user.publicId,
+      userId: user.id,
       fullName: user.fullName,
-      userConfirmedId: (await reportConfirmaded).user.publicId,
+      userConfirmedId: (await reportConfirmaded).user.id,
       userConfirmedemail: (await reportConfirmaded).user.email,
       userConfirmedFullName: (await reportConfirmaded).user.fullName,
     });
 
     return {
-      userId: user.publicId,
-      userConfirmedId: (await reportConfirmaded).user.publicId,
-      reportId: report.publicId,
+      userId: user.id,
+      userConfirmedId: (await reportConfirmaded).user.id,
+      reportId: report.id,
     };
   }
 }

@@ -6,7 +6,7 @@ export class MyProfileUseCase {
   constructor(private readonly prisma: PrismaService) {}
   async execute(id: string) {
     const userAlreadExistis = await this.prisma.user.findUnique({
-      where: { publicId: id },
+      where: { id },
     });
 
     if (!userAlreadExistis) {
@@ -14,7 +14,7 @@ export class MyProfileUseCase {
     }
 
     return {
-      id: userAlreadExistis.publicId,
+      id: userAlreadExistis.id,
       fullName: userAlreadExistis.fullName,
       username: userAlreadExistis.username,
       email: userAlreadExistis.email,

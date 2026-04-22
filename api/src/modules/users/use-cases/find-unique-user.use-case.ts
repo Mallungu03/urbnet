@@ -8,7 +8,7 @@ export class FindUniqueUserUseCase {
   async execute(id: string) {
     const userAlreadExistis = await this.prisma.user.findFirst({
       where: {
-        publicId: id,
+        id,
         isBanned: false,
         deletedAt: null,
         verifiedAt: { not: null },
@@ -20,7 +20,7 @@ export class FindUniqueUserUseCase {
     }
 
     return {
-      id: userAlreadExistis.publicId,
+      id: userAlreadExistis.id,
       name: userAlreadExistis.fullName,
       username: userAlreadExistis.username,
       email: userAlreadExistis.email,

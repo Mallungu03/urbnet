@@ -21,7 +21,7 @@ export class deleteAccountUseCase {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { publicId: targetId },
+      where: { id: targetId },
     });
 
     if (!user) {

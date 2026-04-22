@@ -13,9 +13,9 @@ export class DeleteReportUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(publicId: string, id: string) {
+  async execute(userId: string, id: string) {
     const user = await this.prisma.user.findFirst({
-      where: { publicId, isBanned: false, deletedAt: null },
+      where: { id: userId, isBanned: false, deletedAt: null },
     });
 
     if (!user) {
@@ -23,7 +23,7 @@ export class DeleteReportUseCase {
     }
 
     const report = await this.prisma.report.findFirst({
-      where: { publicId: id, deletedAt: null },
+      where: { id, deletedAt: null },
     });
 
     if (!report) {
@@ -35,7 +35,7 @@ export class DeleteReportUseCase {
     }
 
     await this.prisma.report.update({
-      where: { publicId: id },
+      where: { id },
       data: { deletedAt: new Date() },
     });
 
