@@ -4,6 +4,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { EnvService } from './config/env/env.service';
 import helmet from 'helmet';
 import compression from 'compression';
+import express from 'express';
+import { join } from 'node:path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,6 +34,7 @@ async function bootstrap() {
   );
 
   app.use(compression());
+  app.use('/uploads', express.static(join(process.cwd(), 'storage', 'uploads')));
 
   const env = app.get(EnvService);
   app.useGlobalPipes(

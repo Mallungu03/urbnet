@@ -43,6 +43,21 @@ export class JwtStrategy {
       throw new ForbiddenException('A conta ainda não foi verificada.');
     }
 
+    if (payload.fingerprint) {
+      const device = await this.prisma.device.findFirst({
+        where: {
+          userId: user.id,
+          fingerprint: payload.fingerprint,
+          revokedAt: null,
+        },
+        select: { id: true },
+      });
+
+      if (!device) {
+        throw new UnauthorizedException('Sessão revogada para este dispositivo.');
+      }
+    }
+
     return {
       ...payload,
       email: user.email,

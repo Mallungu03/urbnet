@@ -52,6 +52,7 @@ api/pids
 api/*.pid
 api/*.seed
 api/*.pid.lock
+api/storage
 api/src/generated/prisma
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

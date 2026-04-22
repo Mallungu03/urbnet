@@ -3,5 +3,6 @@ export interface IJwtPayload {
   email: string;
   role: string;
   jti: string; // JWT unique ID (para blacklist)
+  fingerprint?: string;
   exp?: number;
 }

@@ -30,6 +30,7 @@ export class AuthService {
       email: dto.email,
       role: dto.role,
       jti,
+      fingerprint: String(deviceDto.fingerprint),
     };
 
     const accessToken = this.jwtService.sign(payload);
