@@ -1,0 +1,300 @@
+// =============================================================================
+// Angola Municipal Platform — PostgreSQL + PostGIS
+// MVP Schema
+// =============================================================================
+generator client {
+  provider        = "prisma-client"
+  previewFeatures = ["postgresqlExtensions"]
+  moduleFormat    = "cjs"
+  output          = "../src/generated/prisma"
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis, pg_trgm]
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+enum UserRole {
+  admin
+  citizen
+}
+
+enum AuditActorType {
+  system
+  admin
+}
+
+enum NotificationChannel {
+  email
+  push
+  in_app
+}
+
+// =============================================================================
+// BOUNDED CONTEXT: USER + SESSION
+// =============================================================================
+
+/// [T01] Utilizador
+model User {
+  id         String  @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  fullName   String  @db.VarChar(80)
+  username   String  @unique @db.VarChar(80)
+  avatarSeed String? @db.VarChar(32)
+  email      String  @unique @db.VarChar(100)
+
+  passwordHash String    @db.VarChar(100)
+  role         UserRole  @default(citizen)
+  isBanned     Boolean   @default(false)
+  verifiedAt   DateTime? @db.Timestamptz()
+  lastActiveAt DateTime? @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @db.Timestamptz()
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz()
+  deletedAt    DateTime? @db.Timestamptz()
+
+  refreshTokens       RefreshToken[]
+  reports             Report[]
+  reportConfirmations ReportConfirmation[]
+  notifications       Notification[]
+  proximityAlerts     ProximityAlert[]
+
+  followers  Follow[]   @relation("Following") // quem me segue
+  following  Follow[]   @relation("Follower") // quem eu sigo
+  otps       Otp[]
+  devices    Device[]
+  categories Category[]
+}
+
+/// [T02] Dispositivos registados — controlo de sessões e push tokens
+model Device {
+  id          BigInt    @id @default(autoincrement())
+  userId      String    @db.Uuid
+  fingerprint String    @db.VarChar(64)
+  deviceName  String?   @db.VarChar(100)
+  platform    String    @db.VarChar(20) // iOS, Android, Web
+  osVersion   String?   @db.VarChar(30)
+  appVersion  String?   @db.VarChar(20)
+  isTrusted   Boolean   @default(false)
+  lastSeenAt  DateTime  @default(now()) @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @db.Timestamptz()
+  revokedAt   DateTime? @db.Timestamptz()
+
+  pushToken          String?   @db.VarChar(512) // FCM token ou APNs token
+  pushTokenUpdatedAt DateTime? @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  refreshTokens RefreshToken[]
+
+  @@unique([userId, fingerprint])
+  @@index([userId])
+}
+
+/// [T03] Refresh tokens — rotação de sessões com revogação por dispositivo
+model RefreshToken {
+  id        BigInt    @id @default(autoincrement())
+  userId    String    @db.Uuid
+  tokenHash String    @unique @db.VarChar(128)
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  expiresAt DateTime  @db.Timestamptz()
+  revokedAt DateTime? @db.Timestamptz()
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device   Device? @relation(fields: [deviceId], references: [id])
+  deviceId BigInt?
+
+  @@index([userId, revokedAt])
+}
+
+model Otp {
+  id        BigInt   @id @default(autoincrement())
+  userId    String   @db.Uuid
+  codeHash  String   @db.VarChar(128)
+  expiresAt DateTime @db.Timestamptz()
+  createdAt DateTime @default(now()) @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+/// [T04] Seguimento entre cidadãos
+model Follow {
+  id          BigInt   @id @default(autoincrement())
+  followerId  String   @db.Uuid // quem segue
+  followingId String   @db.Uuid // quem é seguido
+  createdAt   DateTime @default(now()) @db.Timestamptz()
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId]) // consulta crítica: "quem segue este user?" para fan-out de notificações
+}
+
+// =============================================================================
+// BOUNDED CONTEXT: REPORT
+// =============================================================================
+
+/// [T05] Categorias de incidentes
+model Category {
+  id        Int       @id @default(autoincrement()) @db.SmallInt
+  slug      String    @unique @db.VarChar(50)
+  name      String    @db.VarChar(80)
+  colorHex  String    @db.Char(6)
+  isRisk    Boolean   @default(false)
+  isActive  Boolean   @default(true)
+  createdBy String    @db.Uuid()
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  user    User     @relation(fields: [createdBy], references: [id])
+  reports Report[]
+}
+
+/// [T06] Reportagem de incidente — AGGREGATE ROOT do contexto Report
+model Report {
+  id         String @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  userId     String @db.Uuid
+  categoryId Int    @db.SmallInt
+
+  content  String
+  location Unsupported("geometry(POINT, 4326)")
+
+  totalConfirmations Int? @default(0)
+
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime  @default(now()) @updatedAt @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  user     User     @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  media         ReportMedia[]
+  confirmations ReportConfirmation[]
+  notifications Notification[]
+  alertZone     AlertZone? // 1-para-1: só existe se category.isRisk = true
+
+  @@index([location], type: Gist)
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+/// [T07] Media associada a uma reportagem — armazenada em S3
+model ReportMedia {
+  id         BigInt   @id @default(autoincrement())
+  reportId   String   @db.Uuid
+  s3Key      String   @db.VarChar(500)
+  mimeType   String?  @db.VarChar(50)
+  fileSizeKb Int?
+  widthPx    Int?
+  heightPx   Int?
+  createdAt  DateTime @default(now()) @db.Timestamptz()
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+/// [T08] Confirmações de incidentes por outros cidadãos
+model ReportConfirmation {
+  id        BigInt   @id @default(autoincrement())
+  reportId  String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz()
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([reportId, userId])
+  @@index([reportId])
+}
+
+/// [T09] Log de auditoria imutável — sem UPDATE, sem DELETE por design
+model AuditLog {
+  id         BigInt         @id @default(autoincrement())
+  entityType String         @db.VarChar(50)
+  entityId   String         @db.VarChar(36)
+  action     String         @db.VarChar(50)
+  actorType  AuditActorType
+  actorId    String?        @db.Uuid
+  payload    Json           @default("{}")
+  ipHash     String?        @db.VarChar(64)
+  createdAt  DateTime       @default(now()) @db.Timestamptz()
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt(sort: Desc)])
+}
+
+// =============================================================================
+// BOUNDED CONTEXT: NOTIFICATION
+// =============================================================================
+
+/// [T10] Notificações para utilizadores (in-app + push)
+model Notification {
+  id      BigInt              @id @default(autoincrement())
+  userId  String              @db.Uuid
+  channel NotificationChannel
+  title   String              @db.VarChar(200)
+  body    String              @db.VarChar(500)
+  isRead  Boolean             @default(false)
+  sentAt  DateTime            @default(now()) @db.Timestamptz()
+  readAt  DateTime?           @db.Timestamptz()
+
+  // referências opcionais conforme o tipo
+  reportId    String? @db.Uuid
+  alertZoneId String? @db.Uuid
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  alertZone AlertZone? @relation(fields: [alertZoneId], references: [id], onDelete: SetNull)
+
+  @@index([userId, sentAt(sort: Desc)])
+  @@index([reportId])
+}
+
+// =============================================================================
+// BOUNDED CONTEXT: ALERT
+// =============================================================================
+
+/// [T11] Zona de alerta geoespacial — AGGREGATE ROOT do contexto Alert
+model AlertZone {
+  id       String @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  reportId String @unique @db.Uuid
+
+  center Unsupported("geometry(POINT, 4326)")
+
+  radiusMeters  Int       @default(1000)
+  totalNotified Int       @default(0)
+  createdAt     DateTime  @default(now()) @db.Timestamptz()
+  updatedAt     DateTime  @default(now()) @updatedAt @db.Timestamptz()
+  deactivatedAt DateTime? @db.Timestamptz()
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  proximityAlerts ProximityAlert[]
+  notifications   Notification[]
+
+  @@index([center], type: Gist)
+}
+
+/// [T12] Log de alertas de proximidade enviados
+model ProximityAlert {
+  id          BigInt    @id @default(autoincrement())
+  alertZoneId String    @db.Uuid
+  userId      String    @db.Uuid
+  sentAt      DateTime  @default(now()) @db.Timestamptz()
+  deliveredAt DateTime? @db.Timestamptz()
+  readAt      DateTime? @db.Timestamptz()
+
+  alertZone AlertZone @relation(fields: [alertZoneId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([alertZoneId, userId])
+  @@index([alertZoneId, sentAt(sort: Desc)])
+  @@index([userId, sentAt(sort: Desc)])
+}

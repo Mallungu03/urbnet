@@ -1,0 +1,143 @@
+<html lang='pt-br'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Verificação Reporta</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f9fafb;
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+      }
+
+      .container {
+        max-width: 520px; /* Aumentado para dar mais largura ao conteúdo */
+        margin: 30px auto;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 40px 48px; /* Mais espaço nas laterais, menos topo/fundo */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e5e7eb;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px; /* Reduzido */
+      }
+
+      .logo-icon {
+        width: 28px;
+        height: 28px;
+        background: #3b82f6;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo-text {
+        font-weight: 600;
+        font-size: 17px;
+        color: #111827;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 8px 0; /* Mais compacto */
+      }
+
+      p {
+        font-size: 15px;
+        line-height: 1.5;
+        color: #4b5563;
+        margin: 0 0 12px 0;
+      }
+
+      .otp-card {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 20px; /* Mais baixo */
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      .otp-code {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 6px;
+        color: #3b82f6;
+      }
+
+      .expiry {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
+
+      .footer {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+
+      .footer a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          margin: 10px;
+          padding: 24px;
+        }
+        .footer {
+          flex-direction: column;
+          gap: 8px;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='logo'>
+        <div class='logo-icon'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='white'><path
+              d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'
+            /></svg>
+        </div>
+        <span class='logo-text'>Reporta</span>
+      </div>
+
+      <h1>Verifique seu e-mail</h1>
+      <p>Olá, {{fullName}}. Use o código abaixo para ativar sua conta:</p>
+
+      <div class='otp-card'>
+        <div class='otp-code'>{{otp}}</div>
+        <div class='expiry'>Válido por 15 minutos</div>
+      </div>
+
+      <p style='font-size: 13px; color: #94a3b8; margin-bottom: 0;'>
+        Se não solicitou este código, ignore este e-mail.
+      </p>
+
+      <div class='footer'>
+        <span>&copy; 2026 Equipe Reporta</span>
+        <a href='mailto:suporte@reporta.ao'>Suporte</a>
+      </div>
+    </div>
+  </body>
+</html>
