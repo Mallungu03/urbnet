@@ -7,12 +7,14 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as argon2 from 'argon2';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(email: string, changePasswordDto: ChangePasswordDto) {
@@ -41,14 +43,12 @@ export class ChangePasswordUseCase {
       data: { passwordHash },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'password_changed',
-        actorType: 'system',
-        actorId: userAlreadyExists.id,
-        entityId: userAlreadyExists.id,
-        entityType: 'user',
-      },
+    await this.auditLog.create({
+      action: 'password_changed',
+      entityType: 'user',
+      entityId: userAlreadyExists.id,
+      actorId: userAlreadyExists.id,
+      message: 'Palavra-passe alterada.',
     });
 
     this.eventEmitter.emit('auth.password-changed', {

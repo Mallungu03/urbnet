@@ -54,7 +54,9 @@ export class JwtStrategy {
       });
 
       if (!device) {
-        throw new UnauthorizedException('Sessão revogada para este dispositivo.');
+        throw new UnauthorizedException(
+          'Sessão revogada para este dispositivo.',
+        );
       }
     }
 

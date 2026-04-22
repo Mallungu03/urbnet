@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SignOutDto } from '../dto/sign-out.dto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class SignOutUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   async execute(id: string, signOutDto: SignOutDto) {
     const userAlreadyExists = await this.prisma.user.findUnique({
@@ -49,18 +53,17 @@ export class SignOutUseCase {
         },
       });
 
-      await prisma.auditLog.create({
-        data: {
-          action: 'user_signed_out',
-          actorType: 'system',
-          actorId: userAlreadyExists.id,
-          entityId: userAlreadyExists.id,
-          entityType: 'user',
-          payload: {
-            fingerprint: String(signOutDto.fingerprint),
-            platform: String(signOutDto.platform),
-          },
+      await this.auditLog.create({
+        action: 'user_signed_out',
+        entityType: 'user',
+        entityId: userAlreadyExists.id,
+        actorId: userAlreadyExists.id,
+        message: 'Sessao encerrada.',
+        payload: {
+          fingerprint: String(signOutDto.fingerprint),
+          platform: String(signOutDto.platform),
         },
+        client: prisma,
       });
     });
 

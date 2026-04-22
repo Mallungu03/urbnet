@@ -10,30 +10,30 @@ export class DeviceSessionDto {
   @IsString()
   @IsNotEmpty()
   @Length(8, 64)
-  fingerprint;
+  fingerprint: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
-  platform;
+  platform: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  deviceName?;
+  deviceName?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  osVersion?;
+  osVersion?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  appVersion?;
+  appVersion?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(512)
-  pushToken?;
+  pushToken?: string;
 }

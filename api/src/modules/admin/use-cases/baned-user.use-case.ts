@@ -6,12 +6,16 @@ import {
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UserRole } from '@/generated/prisma/enums';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AuditActorType } from '@/generated/prisma/enums';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
+import type { User } from '@/generated/prisma/client';
 
 @Injectable()
 export class BanedUserUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: string) {
@@ -35,8 +39,10 @@ export class BanedUserUseCase {
       throw new NotFoundException();
     }
 
+    let updatedUser: User;
+
     if (userToAlterRole.isBanned === true) {
-      await this.prisma.user.update({
+      updatedUser = await this.prisma.user.update({
         where: { id: userToAlterRole.id },
         data: { isBanned: false, updatedAt: new Date() },
       });
@@ -48,7 +54,7 @@ export class BanedUserUseCase {
         role: userToAlterRole.role,
       });
     } else {
-      await this.prisma.user.update({
+      updatedUser = await this.prisma.user.update({
         where: { id: userToAlterRole.id },
         data: { isBanned: true, updatedAt: new Date() },
       });
@@ -59,22 +65,25 @@ export class BanedUserUseCase {
       });
     }
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'banedUser',
-        entityType: 'user',
-        actorId: user.id,
-        actorType: 'admin',
-        entityId: userToAlterRole.id,
-        payload: {},
+    await this.auditLog.create({
+      action: updatedUser.isBanned ? 'user_banned' : 'user_unbanned',
+      entityType: 'user',
+      entityId: updatedUser.id,
+      actorType: AuditActorType.admin,
+      actorId: user.id,
+      message: updatedUser.isBanned
+        ? 'Utilizador banido.'
+        : 'Utilizador reativado.',
+      payload: {
+        isBanned: updatedUser.isBanned,
       },
     });
 
     return {
-      id: userToAlterRole.id,
-      email: userToAlterRole.email,
-      fullName: userToAlterRole.fullName,
-      username: userToAlterRole.username,
+      id: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      username: updatedUser.username,
     };
   }
 }

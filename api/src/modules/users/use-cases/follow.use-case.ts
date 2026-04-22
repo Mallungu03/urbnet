@@ -6,12 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class FollowUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, followingId: string) {
@@ -54,13 +56,14 @@ export class FollowUseCase {
       data: { followerId: follower.id, followingId: following.id },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'user_followed',
-        actorType: 'system',
-        actorId: follower.id,
-        entityId: following.id,
-        entityType: 'user',
+    await this.auditLog.create({
+      action: 'user_followed',
+      entityType: 'user',
+      entityId: following.id,
+      actorId: follower.id,
+      message: 'Utilizador seguido.',
+      payload: {
+        followerId: follower.id,
       },
     });
 

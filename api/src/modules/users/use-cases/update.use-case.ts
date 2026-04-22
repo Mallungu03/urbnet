@@ -7,10 +7,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class UpdateUserUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   async execute(
     authId: string,
@@ -65,13 +69,14 @@ export class UpdateUserUseCase {
       data: dataToUpdate,
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'user_profile_updated',
-        actorType: 'system',
-        actorId: user.id,
-        entityId: user.id,
-        entityType: 'user',
+    await this.auditLog.create({
+      action: 'user_profile_updated',
+      entityType: 'user',
+      entityId: user.id,
+      actorId: user.id,
+      message: 'Perfil atualizado.',
+      payload: {
+        fields: Object.keys(dataToUpdate),
       },
     });
 

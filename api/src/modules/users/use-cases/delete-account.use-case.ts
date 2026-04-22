@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsersService } from '../users.service';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class deleteAccountUseCase {
@@ -13,6 +14,7 @@ export class deleteAccountUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly usersServices: UsersService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(authId: string, targetId: string) {
@@ -47,14 +49,13 @@ export class deleteAccountUseCase {
           OR: [{ followerId: user.id }, { followingId: user.id }],
         },
       });
-      await prisma.auditLog.create({
-        data: {
-          action: 'user_deleted',
-          actorType: 'system',
-          actorId: user.id,
-          entityId: user.id,
-          entityType: 'user',
-        },
+      await this.auditLog.create({
+        action: 'user_deleted',
+        entityType: 'user',
+        entityId: user.id,
+        actorId: user.id,
+        message: 'Conta encerrada.',
+        client: prisma,
       });
     });
 

@@ -1,3 +1,4 @@
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import {
   Injectable,
@@ -11,6 +12,7 @@ export class DeleteReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: string) {
@@ -37,6 +39,17 @@ export class DeleteReportUseCase {
     await this.prisma.report.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+
+    await this.auditLog.create({
+      action: 'report_deleted',
+      entityType: 'report',
+      entityId: report.id,
+      actorId: user.id,
+      message: 'Report removido.',
+      payload: {
+        ownerId: report.userId,
+      },
     });
 
     this.eventEmitter.emit('report.deleted');

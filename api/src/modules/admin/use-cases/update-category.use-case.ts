@@ -9,9 +9,15 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UserRole } from '@/generated/prisma/enums';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 
+import { AuditActorType } from '@/generated/prisma/enums';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
+
 @Injectable()
 export class UpdateCategoryUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   async execute(
     userId: string,
@@ -85,13 +91,15 @@ export class UpdateCategoryUseCase {
       data: dataToUpdate,
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'update category',
-        actorType: 'admin',
-        entityId: String(categoryUpdated.id),
-        entityType: 'category',
-        actorId: user.id,
+    await this.auditLog.create({
+      action: 'category_updated',
+      entityType: 'category',
+      entityId: categoryUpdated.id,
+      actorType: AuditActorType.admin,
+      actorId: user.id,
+      message: 'Categoria atualizada.',
+      payload: {
+        fields: Object.keys(dataToUpdate),
       },
     });
   }

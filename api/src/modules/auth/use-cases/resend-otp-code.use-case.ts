@@ -3,12 +3,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ResendOtpDto } from '../dto/resend-otp.dto';
 import * as argon2 from 'argon2';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class resendOtpCodeUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(resensOtpCode: ResendOtpDto) {
@@ -35,15 +37,13 @@ export class resendOtpCodeUseCase {
       },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'otp_resent',
-        actorType: 'system',
-        entityId: userAlreadExistis.id,
-        entityType: 'user',
-        payload: {
-          email: userAlreadExistis.email,
-        },
+    await this.auditLog.create({
+      action: 'otp_resent',
+      entityType: 'user',
+      entityId: userAlreadExistis.id,
+      message: 'Novo codigo enviado.',
+      payload: {
+        email: userAlreadExistis.email,
       },
     });
 

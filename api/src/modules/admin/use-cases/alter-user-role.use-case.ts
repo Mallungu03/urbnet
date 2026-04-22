@@ -5,10 +5,15 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UserRole } from '@/generated/prisma/enums';
+import { AuditActorType } from '@/generated/prisma/enums';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class AlterUserRoleUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
 
   async execute(userId: string, id: string) {
     const user = await this.prisma.user.findUnique({
@@ -31,35 +36,38 @@ export class AlterUserRoleUseCase {
       throw new NotFoundException();
     }
 
-    if (userToAlterRole.role === UserRole.admin) {
-      await this.prisma.user.update({
-        where: { id: userToAlterRole.id },
-        data: { role: UserRole.admin, updatedAt: new Date() },
-      });
-    } else {
-      await this.prisma.user.update({
-        where: { id: userToAlterRole.id },
-        data: { role: UserRole.admin, updatedAt: new Date() },
-      });
-    }
+    const nextRole =
+      userToAlterRole.role === UserRole.admin
+        ? UserRole.citizen
+        : UserRole.admin;
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'Alter Role',
-        entityType: 'user',
-        actorId: user.id,
-        actorType: 'admin',
-        entityId: userToAlterRole.id,
-        payload: {},
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userToAlterRole.id },
+      data: { role: nextRole, updatedAt: new Date() },
+    });
+
+    await this.auditLog.create({
+      action: 'user_role_changed',
+      entityType: 'user',
+      entityId: updatedUser.id,
+      actorType: AuditActorType.admin,
+      actorId: user.id,
+      message:
+        nextRole === UserRole.admin
+          ? 'Permissao de admin concedida.'
+          : 'Permissao de admin removida.',
+      payload: {
+        previousRole: userToAlterRole.role,
+        newRole: nextRole,
       },
     });
 
     return {
-      id: userToAlterRole.id,
-      email: userToAlterRole.email,
-      fullName: userToAlterRole.fullName,
-      username: userToAlterRole.username,
-      role: userToAlterRole.role,
+      id: updatedUser.id,
+      email: updatedUser.email,
+      fullName: updatedUser.fullName,
+      username: updatedUser.username,
+      role: updatedUser.role,
     };
   }
 }

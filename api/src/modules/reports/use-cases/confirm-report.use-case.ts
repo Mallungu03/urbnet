@@ -1,3 +1,4 @@
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import {
   Injectable,
@@ -11,6 +12,7 @@ export class ConfirmReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: string) {
@@ -34,31 +36,45 @@ export class ConfirmReportUseCase {
       throw new UnauthorizedException();
     }
 
-    const reportConfirmaded = this.prisma.$transaction(async (prisma) => {
+    const reportConfirmaded = await this.prisma.$transaction(async (prisma) => {
       await prisma.reportConfirmation.create({
         data: { userId: user.id, reportId: report.id },
       });
 
-      return await prisma.report.update({
+      const updatedReport = await prisma.report.update({
         where: { id },
         data: { totalConfirmations: { increment: 1 } },
         include: {
           user: { select: { id: true, email: true, fullName: true } },
         },
       });
+
+      await this.auditLog.create({
+        action: 'report_confirmed',
+        entityType: 'report',
+        entityId: report.id,
+        actorId: user.id,
+        message: 'Report confirmado.',
+        payload: {
+          ownerId: report.userId,
+        },
+        client: prisma,
+      });
+
+      return updatedReport;
     });
 
     this.eventEmitter.emit('report.confirmed', {
       userId: user.id,
       fullName: user.fullName,
-      userConfirmedId: (await reportConfirmaded).user.id,
-      userConfirmedemail: (await reportConfirmaded).user.email,
-      userConfirmedFullName: (await reportConfirmaded).user.fullName,
+      userConfirmedId: reportConfirmaded.user.id,
+      userConfirmedemail: reportConfirmaded.user.email,
+      userConfirmedFullName: reportConfirmaded.user.fullName,
     });
 
     return {
       userId: user.id,
-      userConfirmedId: (await reportConfirmaded).user.id,
+      userConfirmedId: reportConfirmaded.user.id,
       reportId: report.id,
     };
   }

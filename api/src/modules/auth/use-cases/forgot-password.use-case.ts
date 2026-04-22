@@ -3,12 +3,14 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as argon2 from 'argon2';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class ForgotPasswordUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(forgotPasswordDto: ForgotPasswordDto) {
@@ -48,15 +50,13 @@ export class ForgotPasswordUseCase {
       },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'forgot_password',
-        actorType: 'system',
-        entityId: user.id,
-        entityType: 'user',
-        payload: {
-          email: user.email,
-        },
+    await this.auditLog.create({
+      action: 'forgot_password',
+      entityType: 'user',
+      entityId: user.id,
+      message: 'Codigo de recuperacao enviado.',
+      payload: {
+        email: user.email,
       },
     });
 

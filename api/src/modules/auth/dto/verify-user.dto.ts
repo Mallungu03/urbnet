@@ -13,40 +13,50 @@ import {
 export class VerifyUserDto {
   @IsEmail()
   @IsNotEmpty()
-  email;
+  email: string;
 
   @IsNumber()
   @Min(100000)
   @Max(999999)
-  otp;
-
-  @IsString()
-  @IsNotEmpty()
-  @Length(8, 64)
-  fingerprint;
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(20)
-  platform;
+  otp: number;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  deviceName?;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  osVersion?;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  appVersion?;
+  @MaxLength(45)
+  ip?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(512)
-  pushToken?;
+  userAgent?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(8, 64)
+  fingerprint: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(20)
+  platform: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  deviceName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  osVersion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  appVersion?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  pushToken?: string;
 }

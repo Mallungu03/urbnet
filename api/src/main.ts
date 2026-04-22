@@ -34,7 +34,10 @@ async function bootstrap() {
   );
 
   app.use(compression());
-  app.use('/uploads', express.static(join(process.cwd(), 'storage', 'uploads')));
+  app.use(
+    '/uploads',
+    express.static(join(process.cwd(), 'storage', 'uploads')),
+  );
 
   const env = app.get(EnvService);
   app.useGlobalPipes(

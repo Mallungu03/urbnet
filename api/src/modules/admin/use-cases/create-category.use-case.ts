@@ -5,12 +5,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import { UserRole } from '@/generated/prisma/enums';
+import { AuditActorType, UserRole } from '@/generated/prisma/enums';
 import { CreateCategoryDto } from '../dto/create-category.dto';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class CreateCategoryUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLog: AuditLogService,
+  ) {}
   async execute(id: string, createAdminDto: CreateCategoryDto) {
     const name = String(createAdminDto.name);
     const slug = String(createAdminDto.slug);
@@ -41,14 +45,16 @@ export class CreateCategoryUseCase {
       data: { name, slug, colorHex, createdBy: user.id, isRisk },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'create category',
-        actorType: 'admin',
-        entityId: String(category.id),
-        actorId: user.id,
-        entityType: 'category',
-        payload: {},
+    await this.auditLog.create({
+      action: 'category_created',
+      entityType: 'category',
+      entityId: category.id,
+      actorType: AuditActorType.admin,
+      actorId: user.id,
+      message: 'Categoria criada.',
+      payload: {
+        slug: category.slug,
+        isRisk: category.isRisk,
       },
     });
   }

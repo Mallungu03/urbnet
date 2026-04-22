@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import * as argon2 from 'argon2';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class VerifyUseCase {
@@ -16,10 +17,23 @@ export class VerifyUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(verifyUserDto: VerifyUserDto) {
-    const { email, otp, ...deviceInfo } = verifyUserDto;
+    const email = String(verifyUserDto.email).toLowerCase().trim();
+    const otp = String(verifyUserDto.otp).trim();
+
+    const deviceInfo = {
+      ip: String(verifyUserDto.ip).trim(),
+      userAgent: String(verifyUserDto.userAgent).trim(),
+      fingerprint: String(verifyUserDto.fingerprint).trim(),
+      platform: String(verifyUserDto.platform).trim(),
+      deviceName: String(verifyUserDto.deviceName).trim(),
+      osVersion: String(verifyUserDto.osVersion).trim(),
+      appVersion: String(verifyUserDto.appVersion).trim(),
+      pushToken: String(verifyUserDto.pushToken).trim(),
+    };
 
     const userAlreadyExists = await this.prisma.user.findUnique({
       where: { email },
@@ -78,16 +92,15 @@ export class VerifyUseCase {
         fullName: verifiedUser.fullName,
       });
 
-      await prisma.auditLog.create({
-        data: {
-          action: 'user_verified',
-          actorType: 'system',
-          entityId: verifiedUser.id,
-          entityType: 'user',
-          payload: {
-            email: verifiedUser.email,
-          },
+      await this.auditLog.create({
+        action: 'user_verified',
+        entityType: 'user',
+        entityId: verifiedUser.id,
+        message: 'Conta verificada.',
+        payload: {
+          email: verifiedUser.email,
         },
+        client: prisma,
       });
 
       return verifiedUser;

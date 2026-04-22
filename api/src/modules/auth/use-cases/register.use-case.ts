@@ -4,6 +4,7 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class RegisterUseCase {
@@ -11,6 +12,7 @@ export class RegisterUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(registerDto: RegisterDto) {
@@ -66,16 +68,14 @@ export class RegisterUseCase {
       otp,
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'user_registered',
-        entityType: 'user',
-        entityId: user.id,
-        actorType: 'system',
-        payload: {
-          email: user.email,
-          username: user.username,
-        },
+    await this.auditLog.create({
+      action: 'user_registered',
+      entityType: 'user',
+      entityId: user.id,
+      message: 'Conta registada.',
+      payload: {
+        email: user.email,
+        username: user.username,
       },
     });
 

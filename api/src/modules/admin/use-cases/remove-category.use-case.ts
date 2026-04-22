@@ -6,12 +6,15 @@ import {
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { UserRole } from '@/generated/prisma/enums';
 import { AdminService } from '../admin.service';
+import { AuditActorType } from '@/generated/prisma/enums';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class RemoveCategoryUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminService: AdminService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: number) {
@@ -44,13 +47,15 @@ export class RemoveCategoryUseCase {
       },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'remove category',
-        actorType: 'admin',
-        entityId: String(categoryDeleted.id),
-        entityType: 'category',
-        actorId: user.id,
+    await this.auditLog.create({
+      action: 'category_deleted',
+      entityType: 'category',
+      entityId: categoryDeleted.id,
+      actorType: AuditActorType.admin,
+      actorId: user.id,
+      message: 'Categoria removida.',
+      payload: {
+        previousSlug: category.slug,
       },
     });
   }

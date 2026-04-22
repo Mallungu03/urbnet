@@ -6,6 +6,7 @@ import { RefresTokenDto } from '../dto/refresh-token.dto';
 import { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
 import * as argon2 from 'argon2';
 import { AuthService } from '../auth.service';
+import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class RefreshTokenUseCase {
@@ -14,6 +15,7 @@ export class RefreshTokenUseCase {
     private readonly jwtService: JwtService,
     private readonly envService: EnvService,
     private readonly authService: AuthService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(refreshTokenDto: RefresTokenDto) {
@@ -99,17 +101,15 @@ export class RefreshTokenUseCase {
       deviceInfo,
     );
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'token_refreshed',
-        actorType: 'system',
-        actorId: user.id,
-        entityId: user.id,
-        entityType: 'user',
-        payload: {
-          fingerprint: String(deviceInfo.fingerprint),
-          platform: String(deviceInfo.platform),
-        },
+    await this.auditLog.create({
+      action: 'token_refreshed',
+      entityType: 'user',
+      entityId: user.id,
+      actorId: user.id,
+      message: 'Sessao renovada.',
+      payload: {
+        fingerprint: String(deviceInfo.fingerprint),
+        platform: String(deviceInfo.platform),
       },
     });
 
