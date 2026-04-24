@@ -67,6 +67,10 @@ model User {
   otps       Otp[]
   devices    Device[]
   categories Category[]
+
+  @@index([role, isBanned])
+  @@index([deletedAt])
+  @@index([lastActiveAt(sort: Desc)])
 }
 
 /// [T02] Dispositivos registados — controlo de sessões e push tokens
@@ -92,6 +96,8 @@ model Device {
 
   @@unique([userId, fingerprint])
   @@index([userId])
+  @@index([pushToken])
+  @@index([revokedAt])
 }
 
 /// [T03] Refresh tokens — rotação de sessões com revogação por dispositivo
@@ -108,6 +114,8 @@ model RefreshToken {
   deviceId BigInt?
 
   @@index([userId, revokedAt])
+  // Job de limpeza de tokens expirados (DELETE WHERE expiresAt < now())
+  @@index([expiresAt])
 }
 
 model Otp {
@@ -133,7 +141,8 @@ model Follow {
   following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
-  @@index([followingId]) // consulta crítica: "quem segue este user?" para fan-out de notificações
+  @@index([followingId])
+  @@index([followerId, createdAt(sort: Desc)])
 }
 
 // =============================================================================
@@ -155,6 +164,9 @@ model Category {
 
   user    User     @relation(fields: [createdBy], references: [id])
   reports Report[]
+
+  @@index([isActive, isRisk])
+  @@index([deletedAt])
 }
 
 /// [T06] Reportagem de incidente — AGGREGATE ROOT do contexto Report
@@ -182,6 +194,9 @@ model Report {
 
   @@index([location], type: Gist)
   @@index([userId, createdAt(sort: Desc)])
+  @@index([categoryId, createdAt(sort: Desc)])
+  @@index([totalConfirmations(sort: Desc), createdAt(sort: Desc)])
+  @@index([deletedAt])
 }
 
 /// [T07] Media associada a uma reportagem — armazenada em S3
@@ -198,6 +213,7 @@ model ReportMedia {
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([reportId])
+  @@index([s3Key])
 }
 
 /// [T08] Confirmações de incidentes por outros cidadãos
@@ -212,6 +228,7 @@ model ReportConfirmation {
 
   @@unique([reportId, userId])
   @@index([reportId])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 /// [T09] Log de auditoria imutável — sem UPDATE, sem DELETE por design
@@ -228,6 +245,8 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([actorId, createdAt(sort: Desc)])
+  @@index([actorType, createdAt(sort: Desc)])
+  @@index([ipHash, createdAt(sort: Desc)])
 }
 
 // =============================================================================
@@ -256,6 +275,9 @@ model Notification {
 
   @@index([userId, sentAt(sort: Desc)])
   @@index([reportId])
+  @@index([alertZoneId])
+  @@index([userId, isRead])
+  @@index([channel, isRead, sentAt(sort: Desc)])
 }
 
 // =============================================================================
@@ -281,6 +303,7 @@ model AlertZone {
   notifications   Notification[]
 
   @@index([center], type: Gist)
+  @@index([deactivatedAt])
 }
 
 /// [T12] Log de alertas de proximidade enviados
@@ -299,4 +322,5 @@ model ProximityAlert {
   @@unique([alertZoneId, userId])
   @@index([alertZoneId, sentAt(sort: Desc)])
   @@index([userId, sentAt(sort: Desc)])
+  @@index([deliveredAt, sentAt(sort: Desc)])
 }
