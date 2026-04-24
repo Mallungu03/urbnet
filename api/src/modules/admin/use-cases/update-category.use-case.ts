@@ -5,19 +5,15 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { UserRole } from '@/generated/prisma/enums';
+import { PrismaService } from '@/config/db/prisma.service';
+import { UserRole } from '@/generated/enums';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 
-import { AuditActorType } from '@/generated/prisma/enums';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { AuditActorType } from '@/generated/enums';
 
 @Injectable()
 export class UpdateCategoryUseCase {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditLog: AuditLogService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(
     userId: string,
@@ -91,15 +87,17 @@ export class UpdateCategoryUseCase {
       data: dataToUpdate,
     });
 
-    await this.auditLog.create({
-      action: 'category_updated',
-      entityType: 'category',
-      entityId: categoryUpdated.id,
-      actorType: AuditActorType.admin,
-      actorId: user.id,
-      message: 'Categoria atualizada.',
-      payload: {
-        fields: Object.keys(dataToUpdate),
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'category_updated',
+        entityType: 'category',
+        entityId: String(categoryUpdated.id),
+        actorType: AuditActorType.admin,
+        actorId: user.id,
+        payload: {
+          message: 'Categoria atualizada.',
+          fields: Object.keys(dataToUpdate),
+        },
       },
     });
   }

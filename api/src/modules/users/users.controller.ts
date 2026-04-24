@@ -26,7 +26,7 @@ import { GetFollowersUseCase } from './use-cases/get-followers.use-case';
 import { GetFollowingsUseCase } from './use-cases/get-followings.use-case';
 import { UnfollowUseCase } from './use-cases/unfollow.use-case';
 import { FollowUseCase } from './use-cases/follow.use-case';
-import { FindManyQueryDto } from '@/shared/queries/find-many.query';
+import { FindManyQuery } from '@/shared/queries/find-many.query';
 
 @Controller('users')
 export class UsersController {
@@ -50,7 +50,7 @@ export class UsersController {
 
   @HttpCode(HttpStatus.OK)
   @Get('find-many')
-  findMany(@Query() query: FindManyQueryDto) {
+  findMany(@Query() query: FindManyQuery) {
     return this.findManyUseCase.execute(query);
   }
 

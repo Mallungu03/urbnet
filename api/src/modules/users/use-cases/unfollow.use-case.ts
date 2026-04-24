@@ -1,13 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()
 export class UnfollowUseCase {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditLog: AuditLogService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(userId: string, followingId: string) {
     const follower = await this.prisma.user.findUnique({
@@ -41,14 +37,17 @@ export class UnfollowUseCase {
       throw new NotFoundException('Não existe seguimento ativo para remover.');
     }
 
-    await this.auditLog.create({
-      action: 'user_unfollowed',
-      entityType: 'user',
-      entityId: following.id,
-      actorId: follower.id,
-      message: 'Seguimento removido.',
-      payload: {
-        followerId: follower.id,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'user_unfollowed',
+        entityType: 'user',
+        entityId: following.id,
+        actorId: follower.id,
+        actorType: 'system',
+        payload: {
+          message: 'Seguimento removido.',
+          followerId: follower.id,
+        },
       },
     });
 

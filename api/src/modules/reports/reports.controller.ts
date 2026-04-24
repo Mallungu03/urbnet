@@ -21,7 +21,7 @@ import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
 import { CreateReportUseCase } from './use-cases/create-report.usecase';
 import { DeleteReportUseCase } from './use-cases/delete-report.use-case';
 import { FindUniqueReportUseCase } from './use-cases/find-unique-report.use-case';
-import { FindManyQueryDto } from '@/shared/queries/find-many.query';
+import { FindManyQuery } from '@/shared/queries/find-many.query';
 import { FindManyReportsUseCase } from './use-cases/find-many-reports.use-case';
 import { ConfirmReportUseCase } from './use-cases/confirm-report.use-case';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -59,7 +59,7 @@ export class ReportsController {
   }
 
   @Get('find-many')
-  findMany(@Query() query: FindManyQueryDto) {
+  findMany(@Query() query: FindManyQuery) {
     return this.findManyReportsUseCase.execute(query);
   }
 

@@ -1,31 +1,37 @@
 import { EnvService } from '@/config/env/env.service';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RefresTokenDto } from '../dto/refresh-token.dto';
 import { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
 import * as argon2 from 'argon2';
 import { AuthService } from '../auth.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class RefreshTokenUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly envService: EnvService,
+    private readonly env: EnvService,
     private readonly authService: AuthService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(refreshTokenDto: RefresTokenDto) {
-    const { refreshToken, ...deviceInfo } = refreshTokenDto;
+    const deviceInfo = {
+      fingerprint: String(refreshTokenDto.fingerprint),
+      platform: String(refreshTokenDto.platform),
+      deviceName: String(refreshTokenDto.deviceName),
+      osVersion: String(refreshTokenDto.osVersion),
+      appVersion: String(refreshTokenDto.appVersion),
+      pushToken: String(refreshTokenDto.pushToken),
+    };
+    const refreshToken = String(refreshTokenDto.refreshToken);
 
     let payload: IJwtPayload;
 
     try {
       payload = await this.jwtService.verifyAsync<IJwtPayload>(refreshToken, {
-        secret: this.envService.jwtRefreshSecret,
+        secret: this.env.jwtRefreshSecret,
       });
     } catch {
       throw new UnauthorizedException('Refresh token inválido ou expirado.');
@@ -42,7 +48,7 @@ export class RefreshTokenUseCase {
     const device = await this.prisma.device.findFirst({
       where: {
         userId: user.id,
-        fingerprint: String(deviceInfo.fingerprint),
+        fingerprint: deviceInfo.fingerprint,
         revokedAt: null,
       },
       select: { id: true },
@@ -101,15 +107,18 @@ export class RefreshTokenUseCase {
       deviceInfo,
     );
 
-    await this.auditLog.create({
-      action: 'token_refreshed',
-      entityType: 'user',
-      entityId: user.id,
-      actorId: user.id,
-      message: 'Sessao renovada.',
-      payload: {
-        fingerprint: String(deviceInfo.fingerprint),
-        platform: String(deviceInfo.platform),
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'token_refreshed',
+        entityType: 'user',
+        entityId: user.id,
+        actorId: user.id,
+        actorType: 'user',
+        payload: {
+          message: 'Sessao renovada.',
+          fingerprint: String(deviceInfo.fingerprint),
+          platform: String(deviceInfo.platform),
+        },
       },
     });
 

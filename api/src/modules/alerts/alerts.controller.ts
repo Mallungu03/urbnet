@@ -6,6 +6,8 @@ import {
   Query,
   ParseIntPipe,
   Post,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
@@ -22,6 +24,7 @@ export class AlertsController {
     private readonly findUniqueUseCase: FindUniqueAlertZoneUseCase,
   ) {}
 
+  @HttpCode(HttpStatus.CREATED)
   @Post()
   createProximityAlert(
     @CurrentUser() user: IJwtPayload,
@@ -30,6 +33,7 @@ export class AlertsController {
     return this.createProximityAlertUseCase.execute(user.sub, param);
   }
 
+  @HttpCode(HttpStatus.FOUND)
   @Get('find-many')
   findMany(
     @CurrentUser() user: IJwtPayload,
@@ -39,6 +43,7 @@ export class AlertsController {
     return this.findManyUseCase.execute(user.sub, { page, limit });
   }
 
+  @HttpCode(HttpStatus.FOUND)
   @Get(':id')
   findUnique(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
     return this.findUniqueUseCase.execute(user.sub, id);

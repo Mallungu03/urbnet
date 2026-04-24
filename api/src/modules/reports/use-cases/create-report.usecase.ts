@@ -5,12 +5,11 @@ import {
 } from '@nestjs/common';
 import sharp from 'sharp';
 import { CreateReportDto } from '../dto/create-report.dto';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import {} from 'multer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { randomUUID } from 'node:crypto';
 import { ReportMediaStorageService } from '../services/report-media-storage.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class CreateReportUseCase {
@@ -18,7 +17,6 @@ export class CreateReportUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmmitter: EventEmitter2,
     private readonly reportMediaStorage: ReportMediaStorageService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(
@@ -96,21 +94,23 @@ export class CreateReportUseCase {
           },
         });
 
-        await this.auditLog.create({
-          action: 'report_created',
-          entityType: 'report',
-          entityId: createdReport.id,
-          actorId: user.id,
-          message: 'Report criado.',
-          payload: {
-            categoryId,
-            fileKey,
-            mimeType: 'image/jpeg',
-            fileSizeKb,
-            widthPx: width,
-            heightPx: height,
+        await this.prisma.auditLog.create({
+          data: {
+            action: 'report_created',
+            entityType: 'report',
+            entityId: createdReport.id,
+            actorId: user.id,
+            actorType: 'system',
+            payload: {
+              message: 'Report criado.',
+              categoryId,
+              fileKey,
+              mimeType: 'image/jpeg',
+              fileSizeKb,
+              widthPx: width,
+              heightPx: height,
+            },
           },
-          client: prisma,
         });
 
         return createdReport;

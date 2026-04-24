@@ -17,6 +17,13 @@ export const envValidationSchema = Joi.object({
   JWT_ACCESS_IN: Joi.string().required(),
   JWT_REFRESH_IN: Joi.string().required(),
 
+  //limit
+  RATE_TTL: Joi.number().integer().min(1).required(),
+  RATE_LIMIT: Joi.number().integer().min(1).required(),
+  AUTH_RATE_TTL: Joi.number().integer().min(1).required(),
+  AUTH_RATE_LIMIT: Joi.number().integer().min(1).required(),
+  RATE_BLOCK_DURATION: Joi.number().integer().min(1).required(),
+
   // Mail Service
   SMTP_HOST: Joi.string().required(),
   SMTP_PORT: Joi.number().required(),

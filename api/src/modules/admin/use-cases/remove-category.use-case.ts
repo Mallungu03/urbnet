@@ -3,18 +3,16 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { UserRole } from '@/generated/prisma/enums';
+import { PrismaService } from '@/config/db/prisma.service';
+import { UserRole } from '@/generated/enums';
 import { AdminService } from '../admin.service';
-import { AuditActorType } from '@/generated/prisma/enums';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { AuditActorType } from '@/generated/enums';
 
 @Injectable()
 export class RemoveCategoryUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminService: AdminService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: number) {
@@ -47,15 +45,17 @@ export class RemoveCategoryUseCase {
       },
     });
 
-    await this.auditLog.create({
-      action: 'category_deleted',
-      entityType: 'category',
-      entityId: categoryDeleted.id,
-      actorType: AuditActorType.admin,
-      actorId: user.id,
-      message: 'Categoria removida.',
-      payload: {
-        previousSlug: category.slug,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'category_deleted',
+        entityType: 'category',
+        entityId: String(categoryDeleted.id),
+        actorType: AuditActorType.admin,
+        actorId: user.id,
+        payload: {
+          message: 'Categoria removida.',
+          previousSlug: category.slug,
+        },
       },
     });
   }

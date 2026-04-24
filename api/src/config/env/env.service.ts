@@ -61,4 +61,24 @@ export class EnvService {
   get jwtRefreshExpiresIn(): StringValue {
     return this.config.get<string>('jwt.refreshExpiresIn') as StringValue;
   }
+
+  get rateTtl(): number {
+    return this.config.get<number>('throttler.ttl') ?? 60;
+  }
+
+  get rateLimit(): number {
+    return this.config.get<number>('throttler.limit') ?? 100;
+  }
+
+  get authRateTtl(): number {
+    return this.config.get<number>('throttler.authTtl') ?? 60;
+  }
+
+  get authRateLimit(): number {
+    return this.config.get<number>('throttler.authLimit') ?? 5;
+  }
+
+  get rateBlockDuration(): number {
+    return this.config.get<number>('throttler.blockDuration') ?? 180000;
+  }
 }

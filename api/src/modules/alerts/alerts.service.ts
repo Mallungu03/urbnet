@@ -1,35 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationChannel } from '@/generated/prisma/enums';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { NotificationService } from '@/modules/notification/notification.service';
-
-type NearbyAlertZone = {
-  id: string;
-  reportId: string;
-  distanceMeters: number;
-  radiusMeters: number;
-};
-
-type NearbyUser = {
-  id: string;
-  email: string;
-  fullName: string;
-};
+import { PrismaService } from '@/config/db/prisma.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NearbyAlertZone, NearbyUser } from '@/shared/types/all.types';
 
 @Injectable()
-export class AlertRadiusService {
+export class AlertsService {
   private static readonly DEFAULT_RADIUS_METERS = 1000;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notificationService: NotificationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createAlertZone(
     reportId: string,
     latitude: number,
     longitude: number,
-    radiusMeters = AlertRadiusService.DEFAULT_RADIUS_METERS,
+    radiusMeters = AlertsService.DEFAULT_RADIUS_METERS,
   ) {
     const [alertZone] = await this.prisma.$queryRaw<
       Array<{
@@ -58,7 +45,7 @@ export class AlertRadiusService {
     reportId: string,
     latitude: number,
     longitude: number,
-    radiusMeters = AlertRadiusService.DEFAULT_RADIUS_METERS,
+    radiusMeters = AlertsService.DEFAULT_RADIUS_METERS,
   ) {
     const [alertZone] = await this.prisma.$queryRaw<
       Array<{
@@ -88,26 +75,12 @@ export class AlertRadiusService {
     return alertZone ?? null;
   }
 
-  async deactivateAlertZoneByReportId(reportId: string) {
-    const [alertZone] = await this.prisma.$queryRaw<Array<{ id: string }>>`
-      UPDATE "AlertZone"
-      SET
-        "deactivatedAt" = NOW(),
-        "updatedAt" = NOW()
-      WHERE "reportId" = ${reportId}
-        AND "deactivatedAt" IS NULL
-      RETURNING "id"
-    `;
-
-    return alertZone ?? null;
-  }
-
   async notifyUsersNearAlertZone(
     alertZoneId: string,
     reportId: string,
     latitude: number,
     longitude: number,
-    radiusMeters = AlertRadiusService.DEFAULT_RADIUS_METERS,
+    radiusMeters = AlertsService.DEFAULT_RADIUS_METERS,
   ) {
     const users = await this.prisma.$queryRaw<NearbyUser[]>`
       SELECT DISTINCT
@@ -151,19 +124,16 @@ export class AlertRadiusService {
       });
     });
 
-    await Promise.all(
-      users.map((user) =>
-        this.notificationService.send({
-          userId: user.id,
-          email: user.email,
-          reportId,
-          alertZoneId,
-          title: 'Zona de alerta proxima',
-          body: `Olá ${user.fullName}, identificámos uma zona de alerta a menos de ${radiusMeters} metros da sua área.`,
-          channel: [NotificationChannel.in_app],
-        }),
-      ),
-    );
+    this.eventEmitter.emit('alerts.created-proximity-alert', {
+      users: users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      })),
+      radiusMeters,
+      reportId,
+      alertZoneId,
+    });
 
     return { notifiedUsers: users.length };
   }
@@ -195,7 +165,7 @@ export class AlertRadiusService {
         AND ST_DWithin(
           az."center"::geography,
           ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326)::geography,
-          ${AlertRadiusService.DEFAULT_RADIUS_METERS}
+          ${AlertsService.DEFAULT_RADIUS_METERS}
         )
     `;
 
@@ -221,19 +191,12 @@ export class AlertRadiusService {
       }
     });
 
-    await Promise.all(
-      nearbyZones.map((zone) =>
-        this.notificationService.send({
-          userId,
-          email,
-          reportId: zone.reportId,
-          alertZoneId: zone.id,
-          title: 'Zona de alerta detectada',
-          body: `Olá ${fullName}, existe uma zona de alerta a ${zone.distanceMeters} metros da sua localização atual.`,
-          channel: [NotificationChannel.in_app],
-        }),
-      ),
-    );
+    this.eventEmitter.emit('alert.notifyUserAlertZones', {
+      nearbyZones,
+      userId,
+      email,
+      fullName,
+    });
 
     return nearbyZones;
   }

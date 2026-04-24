@@ -6,7 +6,6 @@ import { dirname, join } from 'node:path';
 @Injectable()
 export class UserAvatarStorageService {
   private readonly uploadsRoot = join(process.cwd(), 'storage', 'uploads');
-
   constructor(private readonly envService: EnvService) {}
 
   async saveAvatar(fileKey: string, buffer: Buffer) {

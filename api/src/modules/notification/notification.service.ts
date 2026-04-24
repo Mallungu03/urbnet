@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { EmailProvider } from './providers/email.provider';
-import { NotificationChannel } from '@/generated/prisma/enums';
+import { PushProvider } from './providers/push.provider';
+import { NotificationChannel } from '@/generated/enums';
 import { ISendNotificationOption } from '@/shared/interfaces/send-notification-option.inteface';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class NotificationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailProvider: EmailProvider,
+    private readonly pushProvider: PushProvider,
   ) {}
 
   async send(options: ISendNotificationOption) {
@@ -33,6 +35,10 @@ export class NotificationService {
         template: options.template,
         templateData: options.templateData,
       });
+    }
+
+    if (options.channel.includes(NotificationChannel.push)) {
+      this.pushProvider.sendPush(options);
     }
   }
 }

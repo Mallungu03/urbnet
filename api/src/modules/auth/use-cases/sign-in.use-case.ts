@@ -8,8 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
 import { SignInDto } from '../dto/sign-in.dto';
 import * as argon2 from 'argon2';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()
 export class SignInUseCase {
@@ -17,19 +16,18 @@ export class SignInUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(signInDto: SignInDto) {
-    const email = signInDto.email;
-    const password = signInDto.password;
+    const email = String(signInDto.email);
+    const password = String(signInDto.password);
     const deviceInfo = {
-      fingerprint: signInDto.fingerprint,
-      platform: signInDto.platform,
-      deviceName: signInDto.deviceName,
-      osVersion: signInDto.osVersion,
-      appVersion: signInDto.appVersion,
-      pushToken: signInDto.pushToken,
+      fingerprint: String(signInDto.fingerprint),
+      platform: String(signInDto.platform),
+      deviceName: String(signInDto.deviceName),
+      osVersion: String(signInDto.osVersion),
+      appVersion: String(signInDto.appVersion),
+      pushToken: String(signInDto.pushToken),
     };
 
     const userAllreadyExists = await this.prisma.user.findUnique({
@@ -56,7 +54,7 @@ export class SignInUseCase {
 
     const isPasswordValid = await argon2.verify(
       userAllreadyExists.passwordHash,
-      String(password),
+      password,
     );
 
     if (!isPasswordValid) {
@@ -77,24 +75,37 @@ export class SignInUseCase {
       data: { lastActiveAt: new Date() },
     });
 
-    this.eventEmitter.emit('auth.signed-in', {
-      userId: userAllreadyExists.id,
-      email: userAllreadyExists.email,
-      fullName: userAllreadyExists.fullName,
-      platform: String(signInDto.platform),
-      deviceName: String(signInDto.deviceName),
+    const total = await this.prisma.device.count({
+      where: {
+        userId: userAllreadyExists.id,
+        fingerprint: deviceInfo.fingerprint,
+        revokedAt: null,
+      },
     });
 
-    await this.auditLog.create({
-      action: 'user_signed_in',
-      entityType: 'user',
-      entityId: userAllreadyExists.id,
-      actorId: userAllreadyExists.id,
-      message: 'Sessao iniciada.',
-      payload: {
-        fingerprint: String(signInDto.fingerprint),
-        platform: String(signInDto.platform),
-        appVersion: String(signInDto.appVersion ?? null),
+    if (total !== 0) {
+      this.eventEmitter.emit('auth.signed-in', {
+        userId: userAllreadyExists.id,
+        email: userAllreadyExists.email,
+        fullName: userAllreadyExists.fullName,
+        platform: deviceInfo.platform,
+        deviceName: deviceInfo.deviceName,
+      });
+    }
+
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'user_signed_in',
+        entityType: 'user',
+        entityId: userAllreadyExists.id,
+        actorId: userAllreadyExists.id,
+        actorType: 'user',
+        payload: {
+          message: 'Sessao iniciada.',
+          fingerprint: deviceInfo.fingerprint,
+          platform: deviceInfo.platform,
+          appVersion: deviceInfo.appVersion ?? null,
+        },
       },
     });
 

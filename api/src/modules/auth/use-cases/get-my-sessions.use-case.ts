@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()
 export class GetMySessionsUseCase {

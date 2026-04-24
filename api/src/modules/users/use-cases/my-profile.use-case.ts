@@ -1,16 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
-import {
-  buildAvatarUrl,
-  buildAvatarValue,
-} from '../utils/user-avatar-response.util';
+import { UsersService } from '../services/users.service';
 
 @Injectable()
 export class MyProfileUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userAvatarStorage: UserAvatarStorageService,
+    private readonly usersService: UsersService,
   ) {}
 
   async execute(id: string) {
@@ -27,13 +25,13 @@ export class MyProfileUseCase {
       fullName: userAlreadExistis.fullName,
       username: userAlreadExistis.username,
       email: userAlreadExistis.email,
-      avatar: buildAvatarValue(
+      avatar: this.usersService.buildAvatarValue(
         userAlreadExistis.avatarSeed,
         userAlreadExistis.avatarKey,
         this.userAvatarStorage,
       ),
       avatarSeed: userAlreadExistis.avatarSeed,
-      avatarUrl: buildAvatarUrl(
+      avatarUrl: this.usersService.buildAvatarUrl(
         userAlreadExistis.avatarKey,
         this.userAvatarStorage,
       ),

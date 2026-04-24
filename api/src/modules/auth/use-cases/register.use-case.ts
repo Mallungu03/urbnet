@@ -1,10 +1,9 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { RegisterDto } from '../dto/register.dto';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import * as argon2 from 'argon2';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class RegisterUseCase {
@@ -12,7 +11,6 @@ export class RegisterUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(registerDto: RegisterDto) {
@@ -48,7 +46,7 @@ export class RegisterUseCase {
         data: {
           userId: createdUser.id,
           codeHash: await argon2.hash(otp),
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // Expira em 15 minutos
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         },
       });
 
@@ -68,14 +66,17 @@ export class RegisterUseCase {
       otp,
     });
 
-    await this.auditLog.create({
-      action: 'user_registered',
-      entityType: 'user',
-      entityId: user.id,
-      message: 'Conta registada.',
-      payload: {
-        email: user.email,
-        username: user.username,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'user_registered',
+        entityType: 'user',
+        entityId: user.id,
+        actorType: 'user',
+        payload: {
+          message: 'Conta registada.',
+          email: user.email,
+          username: user.username,
+        },
       },
     });
 
@@ -85,6 +86,7 @@ export class RegisterUseCase {
       fullName: user.fullName,
       username: user.username,
       role: user.role,
+      otp: otp,
     };
   }
 }

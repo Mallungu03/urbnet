@@ -1,4 +1,4 @@
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
@@ -13,6 +13,7 @@ export class GetManyUseCase {
 
     return await this.prisma.notification.findMany({
       where: { userId: user.id, channel: 'in_app' },
+      orderBy: { sentAt: 'desc' },
     });
   }
 }

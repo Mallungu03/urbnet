@@ -11,8 +11,7 @@ import { VerifyUserDto } from './dto/verify-user.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { Public } from '@/shared/decorators/public.decorator';
 import { CurrentUser } from '@/shared/decorators/current-user.decorator';
-import { ResendOtpDto } from './dto/resend-otp.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { EmailDto } from './dto/email.dto';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -28,6 +27,7 @@ import { resendOtpCodeUseCase } from './use-cases/resend-otp-code.use-case';
 import { ForgotPasswordUseCase } from './use-cases/forgot-password.use-case';
 import { ResetPasswordUseCase } from './use-cases/reset-password.use-case';
 import { ChangePasswordUseCase } from './use-cases/change-password.use-case';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -45,6 +45,7 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.CREATED)
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
@@ -52,6 +53,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('verify')
   async verifyUser(@Body() verifyUserDto: VerifyUserDto) {
@@ -59,13 +61,16 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('refresh-token')
   async refreshToken(@Body() refreshTokenDto: RefresTokenDto) {
     return await this.refreshTokenUseCase.execute(refreshTokenDto);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('sign-in')
   async signIn(@Body() signInDto: SignInDto) {
@@ -88,20 +93,23 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('resend-otp-code')
-  async resendOtpCode(@Body() resendOtpDto: ResendOtpDto) {
-    return await this.resendOtpCodeUseCase.execute(resendOtpDto);
+  async resendOtpCode(@Body() EmailDto: EmailDto) {
+    return await this.resendOtpCodeUseCase.execute(EmailDto);
   }
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @Post('forgot-password')
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    return await this.forgotPasswordUseCase.execute(forgotPasswordDto);
+  async forgotPassword(@Body() emailDto: EmailDto) {
+    return await this.forgotPasswordUseCase.execute(emailDto);
   }
 
   @Public()
+  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {

@@ -5,10 +5,9 @@ import {
 } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import * as argon2 from 'argon2';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class ResetPasswordUseCase {
@@ -16,7 +15,6 @@ export class ResetPasswordUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(resetPasswordDto: ResetPasswordDto) {
@@ -73,15 +71,17 @@ export class ResetPasswordUseCase {
         fullName: user.fullName,
       });
 
-      await this.auditLog.create({
-        action: 'password_reset',
-        entityType: 'user',
-        entityId: user.id,
-        message: 'Palavra-passe redefinida.',
-        payload: {
-          email: user.email,
+      await this.prisma.auditLog.create({
+        data: {
+          action: 'password_reset',
+          entityType: 'user',
+          entityId: user.id,
+          actorType: 'user',
+          payload: {
+            message: 'Palavra-passe redefinida.',
+            email: user.email,
+          },
         },
-        client: prisma,
       });
 
       return user;

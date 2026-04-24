@@ -4,11 +4,15 @@ import { NotificationController } from './notification.controller';
 import { EmailProvider } from './providers/email.provider';
 import { AuthListener } from './listeners/auth.listener';
 import { UserListener } from './listeners/users.listener';
+import { AdminListener } from './listeners/admin.listener';
+import { ReportListener } from './listeners/reports.listener';
+import { AlertListener } from './listeners/alerts.listener';
 import { MarkAllReadUseCase } from './use-cases/mark-all-read';
 import { MarkReadUseCase } from './use-cases/mark-read.use-case';
 import { GetManyUseCase } from './use-cases/get-many.use-case';
 import { FindUniqueUseCase } from './use-cases/find-unique.use-case';
 import { DeleteUseCase } from './use-cases/delete.use-case';
+import { PushProvider } from './providers/push.provider';
 
 @Module({
   controllers: [NotificationController],
@@ -17,11 +21,15 @@ import { DeleteUseCase } from './use-cases/delete.use-case';
     EmailProvider,
     AuthListener,
     UserListener,
+    AdminListener,
+    ReportListener,
+    AlertListener,
     MarkAllReadUseCase,
     MarkReadUseCase,
     GetManyUseCase,
     FindUniqueUseCase,
     DeleteUseCase,
+    PushProvider,
   ],
   exports: [NotificationService],
 })

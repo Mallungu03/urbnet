@@ -3,19 +3,17 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { UserRole } from '@/generated/prisma/enums';
+import { PrismaService } from '@/config/db/prisma.service';
+import { UserRole } from '@/generated/enums';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AuditActorType } from '@/generated/prisma/enums';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
-import type { User } from '@/generated/prisma/client';
+import { AuditActorType } from '@/generated/enums';
+import type { User } from '@/generated/client';
 
 @Injectable()
 export class BanedUserUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: string) {
@@ -65,17 +63,19 @@ export class BanedUserUseCase {
       });
     }
 
-    await this.auditLog.create({
-      action: updatedUser.isBanned ? 'user_banned' : 'user_unbanned',
-      entityType: 'user',
-      entityId: updatedUser.id,
-      actorType: AuditActorType.admin,
-      actorId: user.id,
-      message: updatedUser.isBanned
-        ? 'Utilizador banido.'
-        : 'Utilizador reativado.',
-      payload: {
-        isBanned: updatedUser.isBanned,
+    await this.prisma.auditLog.create({
+      data: {
+        action: updatedUser.isBanned ? 'user_banned' : 'user_unbanned',
+        entityType: 'user',
+        entityId: updatedUser.id,
+        actorType: AuditActorType.admin,
+        actorId: user.id,
+        payload: {
+          message: updatedUser.isBanned
+            ? 'Utilizador banido.'
+            : 'Utilizador reativado.',
+          isBanned: updatedUser.isBanned,
+        },
       },
     });
 

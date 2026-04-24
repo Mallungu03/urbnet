@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationService } from '../notification.service';
 import { OnEvent } from '@nestjs/event-emitter';
-import { NotificationChannel } from '@/generated/prisma/enums';
+import { NotificationChannel } from '@/generated/enums';
 
 @Injectable()
 export class AdminListener {

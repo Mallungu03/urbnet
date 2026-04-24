@@ -1,20 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ForgotPasswordDto } from '../dto/forgot-password.dto';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { EmailDto } from '../dto/email.dto';
+import { PrismaService } from '@/config/db/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as argon2 from 'argon2';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class ForgotPasswordUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
   ) {}
 
-  async execute(forgotPasswordDto: ForgotPasswordDto) {
-    const { email } = forgotPasswordDto;
+  async execute(emailDto: EmailDto) {
+    const email = String(emailDto.email);
 
     const user = await this.prisma.user.findFirst({
       where: {
@@ -50,13 +48,16 @@ export class ForgotPasswordUseCase {
       },
     });
 
-    await this.auditLog.create({
-      action: 'forgot_password',
-      entityType: 'user',
-      entityId: user.id,
-      message: 'Codigo de recuperacao enviado.',
-      payload: {
-        email: user.email,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'forgot_password',
+        entityType: 'user',
+        entityId: user.id,
+        actorType: 'user',
+        payload: {
+          message: 'Codigo de recuperacao enviado.',
+          email: user.email,
+        },
       },
     });
 

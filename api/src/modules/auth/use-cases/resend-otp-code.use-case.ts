@@ -1,22 +1,20 @@
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ResendOtpDto } from '../dto/resend-otp.dto';
 import * as argon2 from 'argon2';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { EmailDto } from '../dto/email.dto';
 
 @Injectable()
 export class resendOtpCodeUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
   ) {}
 
-  async execute(resensOtpCode: ResendOtpDto) {
+  async execute(emailDto: EmailDto) {
     const userAlreadExistis = await this.prisma.user.findFirst({
       where: {
-        email: resensOtpCode.email,
+        email: String(emailDto.email),
         verifiedAt: null,
         isBanned: false,
         deletedAt: null,
@@ -37,13 +35,16 @@ export class resendOtpCodeUseCase {
       },
     });
 
-    await this.auditLog.create({
-      action: 'otp_resent',
-      entityType: 'user',
-      entityId: userAlreadExistis.id,
-      message: 'Novo codigo enviado.',
-      payload: {
-        email: userAlreadExistis.email,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'otp_resent',
+        entityType: 'user',
+        entityId: userAlreadExistis.id,
+        actorType: 'user',
+        payload: {
+          message: 'Novo codigo enviado.',
+          email: userAlreadExistis.email,
+        },
       },
     });
 

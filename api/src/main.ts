@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import express from 'express';
 import { join } from 'node:path';
+import { AllExceptionsFilter } from './shared/filters/all-interceptions.filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -40,13 +41,17 @@ async function bootstrap() {
   );
 
   const env = app.get(EnvService);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      stopAtFirstError: true,
     }),
   );
+
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   await app.listen(env.apiPort || 3000);
 

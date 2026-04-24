@@ -3,17 +3,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { UserRole } from '@/generated/prisma/enums';
-import { AuditActorType } from '@/generated/prisma/enums';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { UserRole } from '@/generated/enums';
+import { AuditActorType } from '@/generated/enums';
+import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()
 export class AlterUserRoleUseCase {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly auditLog: AuditLogService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(userId: string, id: string) {
     const user = await this.prisma.user.findUnique({
@@ -46,19 +42,21 @@ export class AlterUserRoleUseCase {
       data: { role: nextRole, updatedAt: new Date() },
     });
 
-    await this.auditLog.create({
-      action: 'user_role_changed',
-      entityType: 'user',
-      entityId: updatedUser.id,
-      actorType: AuditActorType.admin,
-      actorId: user.id,
-      message:
-        nextRole === UserRole.admin
-          ? 'Permissao de admin concedida.'
-          : 'Permissao de admin removida.',
-      payload: {
-        previousRole: userToAlterRole.role,
-        newRole: nextRole,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'user_role_changed',
+        entityType: 'user',
+        entityId: updatedUser.id,
+        actorType: AuditActorType.admin,
+        actorId: user.id,
+        payload: {
+          message:
+            nextRole === UserRole.admin
+              ? 'Permissao de admin concedida.'
+              : 'Permissao de admin removida.',
+          previousRole: userToAlterRole.role,
+          newRole: nextRole,
+        },
       },
     });
 

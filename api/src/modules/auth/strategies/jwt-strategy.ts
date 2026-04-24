@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import type { IJwtPayload } from '@/shared/interfaces/jwt-payload.interface';
 import { EnvService } from '@/config/env/env.service';
 

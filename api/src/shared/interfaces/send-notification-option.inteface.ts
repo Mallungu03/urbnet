@@ -1,4 +1,4 @@
-import { NotificationChannel } from '@/generated/prisma/enums';
+import { NotificationChannel } from '@/generated/enums';
 
 export interface ISendNotificationOption {
   userId: string;

@@ -42,7 +42,7 @@ export class AdminController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Patch('update-category')
+  @Patch('update-category/:id')
   updateCategory(
     @CurrentUser() user: IJwtPayload,
     @Param('id') id: string,
@@ -53,14 +53,14 @@ export class AdminController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Delete('remove-category')
+  @Delete('remove-category/:id')
   removeCategory(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
     const userId = user.sub;
     return this.removeCategoryUseCase.execute(userId, +id);
   }
 
   @HttpCode(HttpStatus.OK)
-  @Patch('baned-user')
+  @Patch('baned-user/:id')
   banedUser(
     @CurrentUser() user: IJwtPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,7 +70,7 @@ export class AdminController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Patch('alter-user-role')
+  @Patch('alter-user-role/:id')
   alterUserRole(
     @CurrentUser() user: IJwtPayload,
     @Param('id', ParseUUIDPipe) id: string,

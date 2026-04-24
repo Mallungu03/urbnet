@@ -53,7 +53,7 @@ api/*.pid
 api/*.seed
 api/*.pid.lock
 api/storage
-api/src/generated/prisma
+api/src/generated
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 api/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

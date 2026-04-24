@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { UsersService } from './services/users.service';
 import { UsersController } from './users.controller';
 import { MyProfileUseCase } from './use-cases/my-profile.use-case';
 import { FindManyUsersUseCase } from './use-cases/find-many-users.use-case';

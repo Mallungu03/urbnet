@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as Handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SendEmailOptions } from '@/shared/interfaces/send-email-options.interface';
+import { EnvService } from '@/config/env/env.service';
 
 @Injectable()
 export class EmailProvider {
@@ -16,19 +16,16 @@ export class EmailProvider {
     HandlebarsTemplateDelegate
   >();
 
-  constructor(private readonly configService: ConfigService) {
-    this.from = configService.get<string>(
-      'smtp.from',
-      'americomalungo03@gmail.com',
-    );
+  constructor(private readonly env: EnvService) {
+    this.from = env.smtpFrom;
 
     this.transporter = nodemailer.createTransport({
-      host: configService.get<string>('smtp.host', 'smtp.gmail.com'),
-      port: configService.get<number>('smtp.port', 587),
-      secure: configService.get<boolean>('smtp.secure', false),
+      host: env.smtpHost,
+      port: env.smtpPort,
+      secure: env.smtpSecure,
       auth: {
-        user: configService.get<string>('smtp.user'),
-        pass: configService.get<string>('smtp.pass'),
+        user: env.smtpUser,
+        pass: env.smtpPass,
       },
     });
   }

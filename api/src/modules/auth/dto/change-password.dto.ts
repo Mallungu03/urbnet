@@ -3,9 +3,9 @@ import { IsNotEmpty, IsStrongPassword } from 'class-validator';
 export class ChangePasswordDto {
   @IsStrongPassword()
   @IsNotEmpty()
-  oldPassword: string;
+  oldPassword;
 
   @IsStrongPassword()
   @IsNotEmpty()
-  newPassword: string;
+  newPassword;
 }

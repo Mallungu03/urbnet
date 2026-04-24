@@ -6,7 +6,7 @@ generator client {
   provider        = "prisma-client"
   previewFeatures = ["postgresqlExtensions"]
   moduleFormat    = "cjs"
-  output          = "../src/generated/prisma"
+  output          = "../src/generated"
 }
 
 datasource db {
@@ -25,6 +25,7 @@ enum UserRole {
 enum AuditActorType {
   system
   admin
+  user
 }
 
 enum NotificationChannel {

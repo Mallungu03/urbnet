@@ -39,5 +39,5 @@ export class RefresTokenDto {
 
   @IsNotEmpty()
   @IsString()
-  refreshToken: string;
+  refreshToken;
 }

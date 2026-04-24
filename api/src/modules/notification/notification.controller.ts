@@ -38,7 +38,7 @@ export class NotificationController {
     return this.markAllReadUseCase.execute(id);
   }
 
-  @Delete('delete')
+  @Delete('delete/:id')
   async delete(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
     return this.deleteUseCase.execute(user.sub, +id);
   }

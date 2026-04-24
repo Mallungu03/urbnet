@@ -7,8 +7,7 @@ import {
 import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import { ReportMediaStorageService } from '../services/report-media-storage.service';
 import { UpdateReportDto } from '../dto/update-report.dto';
 
@@ -17,7 +16,6 @@ export class UpdateReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
     private readonly reportMediaStorage: ReportMediaStorageService,
   ) {}
 
@@ -142,7 +140,10 @@ export class UpdateReportUseCase {
         heightPx: metadata.height ?? null,
       };
 
-      await this.reportMediaStorage.saveReportImage(nextFileKey, optimizedBuffer);
+      await this.reportMediaStorage.saveReportImage(
+        nextFileKey,
+        optimizedBuffer,
+      );
       previousFileKeyToDelete = report.media[0]?.s3Key ?? null;
       changedFields.push('image');
     }
@@ -208,20 +209,22 @@ export class UpdateReportUseCase {
           }
         }
 
-        await this.auditLog.create({
-          action: 'report_updated',
-          entityType: 'report',
-          entityId: report.id,
-          actorId: userId,
-          message: 'Report atualizado.',
-          payload: {
-            fields: changedFields,
-            categoryId: nextCategoryId,
-            latitude: nextLatitude,
-            longitude: nextLongitude,
-            imageKey: nextFileKey,
+        await this.prisma.auditLog.create({
+          data: {
+            action: 'report_updated',
+            entityType: 'report',
+            entityId: report.id,
+            actorId: userId,
+            actorType: 'user',
+            payload: {
+              message: 'Report atualizado.',
+              fields: changedFields,
+              categoryId: nextCategoryId,
+              latitude: nextLatitude,
+              longitude: nextLongitude,
+              imageKey: nextFileKey,
+            },
           },
-          client: prisma,
         });
       });
     } catch (error) {
@@ -275,7 +278,9 @@ export class UpdateReportUseCase {
           : report.media[0]
             ? {
                 key: report.media[0].s3Key,
-                url: this.reportMediaStorage.getPublicUrl(report.media[0].s3Key),
+                url: this.reportMediaStorage.getPublicUrl(
+                  report.media[0].s3Key,
+                ),
                 mimeType: report.media[0].mimeType,
                 fileSizeKb: report.media[0].fileSizeKb,
                 widthPx: report.media[0].widthPx,

@@ -1,4 +1,4 @@
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import {
   BadRequestException,
   ForbiddenException,
@@ -9,7 +9,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AuthService } from '../auth.service';
 import { VerifyUserDto } from '../dto/verify-user.dto';
 import * as argon2 from 'argon2';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class VerifyUseCase {
@@ -17,7 +16,6 @@ export class VerifyUseCase {
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(verifyUserDto: VerifyUserDto) {
@@ -86,24 +84,26 @@ export class VerifyUseCase {
         },
       });
 
-      this.eventEmitter.emit('auth.user-verified', {
-        userId: verifiedUser.id,
-        email: verifiedUser.email,
-        fullName: verifiedUser.fullName,
-      });
-
-      await this.auditLog.create({
-        action: 'user_verified',
-        entityType: 'user',
-        entityId: verifiedUser.id,
-        message: 'Conta verificada.',
-        payload: {
-          email: verifiedUser.email,
+      await this.prisma.auditLog.create({
+        data: {
+          action: 'user_verified',
+          entityType: 'user',
+          entityId: verifiedUser.id,
+          actorType: 'user',
+          payload: {
+            message: 'Conta verificada.',
+            email: verifiedUser.email,
+          },
         },
-        client: prisma,
       });
 
       return verifiedUser;
+    });
+
+    this.eventEmitter.emit('auth.user-verified', {
+      userId: user.id,
+      email: user.email,
+      fullName: user.fullName,
     });
 
     const tokens = await this.authService.generateTokens(

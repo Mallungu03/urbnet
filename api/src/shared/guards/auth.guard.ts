@@ -24,14 +24,12 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // 1. Verifica se a rota é pública
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
     if (isPublic) return true;
 
-    // 2. Extração e Validação do Token (Obrigatório para qualquer rota não pública)
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = this.extractTokenFromHeader(request);
 
@@ -40,7 +38,6 @@ export class AuthGuard implements CanActivate {
     const payload: IJwtPayload = await this.jwtStrategy.validateToken(token);
     request.user = payload;
 
-    // 3. Verificação de Roles (Autorização)
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -48,7 +45,6 @@ export class AuthGuard implements CanActivate {
 
     if (!requiredRoles) return true;
 
-    // Verifica se o utilizador tem pelo menos um dos roles necessários
     const user = request.user;
 
     if (!user) {

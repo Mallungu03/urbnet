@@ -1,5 +1,4 @@
-import { AuditLogService } from '@/shared/audit/audit-log.service';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import {
   Injectable,
   NotFoundException,
@@ -12,7 +11,6 @@ export class DeleteReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(userId: string, id: string) {
@@ -41,17 +39,20 @@ export class DeleteReportUseCase {
       data: { deletedAt: new Date() },
     });
 
-    await this.auditLog.create({
-      action: 'report_deleted',
-      entityType: 'report',
-      entityId: report.id,
-      actorId: user.id,
-      message: 'Report removido.',
-      payload: {
-        ownerId: report.userId,
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'report_deleted',
+        entityType: 'report',
+        entityId: report.id,
+        actorId: user.id,
+        actorType: 'user',
+        payload: {
+          message: 'Report removido.',
+          ownerId: report.userId,
+        },
       },
     });
 
-    this.eventEmitter.emit('report.deleted');
+    this.eventEmitter.emit('report.deactivated-risk');
   }
 }

@@ -1,4 +1,4 @@
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/config/db/prisma.service';
 import {
   Injectable,
   NotFoundException,
@@ -7,14 +7,12 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import * as argon2 from 'argon2';
-import { AuditLogService } from '@/shared/audit/audit-log.service';
 
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly auditLog: AuditLogService,
   ) {}
 
   async execute(email: string, changePasswordDto: ChangePasswordDto) {
@@ -25,7 +23,8 @@ export class ChangePasswordUseCase {
       throw new NotFoundException('Utilizador não encontrado.');
     }
 
-    const { newPassword, oldPassword } = changePasswordDto;
+    const newPassword = String(changePasswordDto.newPassword);
+    const oldPassword = String(changePasswordDto.oldPassword);
 
     const oldPasswordHash = await argon2.verify(
       userAlreadyExists.passwordHash,
@@ -43,12 +42,17 @@ export class ChangePasswordUseCase {
       data: { passwordHash },
     });
 
-    await this.auditLog.create({
-      action: 'password_changed',
-      entityType: 'user',
-      entityId: userAlreadyExists.id,
-      actorId: userAlreadyExists.id,
-      message: 'Palavra-passe alterada.',
+    await this.prisma.auditLog.create({
+      data: {
+        action: 'password_changed',
+        entityType: 'user',
+        entityId: userAlreadyExists.id,
+        actorId: userAlreadyExists.id,
+        actorType: 'user',
+        payload: {
+          message: 'Palavra-passe alterada.',
+        },
+      },
     });
 
     this.eventEmitter.emit('auth.password-changed', {

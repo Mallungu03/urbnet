@@ -11,38 +11,38 @@ export class SignInDto {
   @IsString()
   @IsNotEmpty()
   @Length(8, 64)
-  fingerprint: string;
+  fingerprint;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(20)
-  platform: string;
+  platform;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  deviceName?: string;
+  deviceName?;
 
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  osVersion?: string;
+  osVersion?;
 
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  appVersion?: string;
+  appVersion?;
 
   @IsOptional()
   @IsString()
   @MaxLength(512)
-  pushToken?: string;
+  pushToken?;
 
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email;
 
   @IsNotEmpty()
   @IsString()
-  password: string;
+  password;
 }

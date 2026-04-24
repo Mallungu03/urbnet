@@ -1,13 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()
 export class AdminService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly eventEmitter: EventEmitter2,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   findMany() {
     return `This action returns all admin`;
