@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import express from 'express';
 import { join } from 'node:path';
-import { AllExceptionsFilter } from './shared/filters/all-interceptions.filters';
+import { AllExceptionsFilter } from './shared/filters/all-exceptions.filters';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
