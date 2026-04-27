@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import envConfig from './env.config';
-import { envValidationSchema } from './env-validation.config';
+import { validationSchema } from './validation.config';
 import { EnvService } from './env.service';
 
 @Global()
@@ -10,7 +10,7 @@ import { EnvService } from './env.service';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [envConfig],
-      validationSchema: envValidationSchema,
+      validationSchema: validationSchema,
     }),
   ],
   providers: [EnvService],

@@ -86,7 +86,6 @@ export class RegisterUseCase {
       fullName: user.fullName,
       username: user.username,
       role: user.role,
-      otp: otp,
     };
   }
 }

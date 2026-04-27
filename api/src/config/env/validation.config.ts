@@ -1,6 +1,6 @@
 import * as Joi from 'joi';
 
-export const envValidationSchema = Joi.object({
+export const validationSchema = Joi.object({
   // Api Configuration
   NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
   LOG_LEVEL: Joi.string().required(),
