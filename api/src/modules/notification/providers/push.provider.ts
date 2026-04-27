@@ -1,15 +1,34 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ISendNotificationOption } from '@/shared/interfaces/send-notification-option.inteface';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import * as admin from 'firebase-admin';
+import * as serviceAccount from './../../../../firebase/firebase-service-account.json';
 
 @Injectable()
-export class PushProvider {
-  private readonly logger = new Logger(PushProvider.name);
+export class PushProvider implements OnModuleInit {
+  onModuleInit() {
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(
+          serviceAccount as admin.ServiceAccount,
+        ),
+      });
+    }
+  }
 
-  sendPush(options: ISendNotificationOption) {
-    // Placeholder implementation for push notifications
-    // TODO: Integrate with actual push service (e.g., Firebase, OneSignal)
-    this.logger.log(
-      `Push notification placeholder: Sending to ${options.userId} - Title: ${options.title}, Body: ${options.body}`,
-    );
+  async sendPushNotification(token: string, title: string, body: string) {
+    const message: admin.messaging.Message = {
+      token,
+      notification: { title, body },
+      android: {
+        priority: 'high',
+      },
+      apns: {
+        payload: {
+          aps: { sound: 'default' },
+        },
+      },
+    };
+
+    const response = await admin.messaging().send(message);
+    return response;
   }
 }

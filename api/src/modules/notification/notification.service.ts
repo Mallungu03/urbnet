@@ -38,7 +38,18 @@ export class NotificationService {
     }
 
     if (options.channel.includes(NotificationChannel.push)) {
-      this.pushProvider.sendPush(options);
+      const device = await this.prisma.device.findFirst({
+        where: { userId: options.userId },
+      });
+
+      if (!device || !device.pushToken) {
+        return;
+      }
+      await this.pushProvider.sendPushNotification(
+        device.pushToken,
+        options.title,
+        options.body,
+      );
     }
   }
 }
