@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import * as serviceAccount from './../../../../firebase/firebase-service-account.json';
+import * as serviceAccount from './../../../../firebase/reporta-angola-firebase-adminsdk-fbsvc-6dcb8d09f7.json';
 
 @Injectable()
 export class PushProvider implements OnModuleInit {
