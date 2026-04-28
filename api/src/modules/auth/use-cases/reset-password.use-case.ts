@@ -65,6 +65,12 @@ export class ResetPasswordUseCase {
         data: { passwordHash },
       });
 
+      // Revogar todos os refresh tokens do usuário para segurança
+      await prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+
       this.eventEmitter.emit('auth.password-reset', {
         userId: user.id,
         email: user.email,

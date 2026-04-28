@@ -42,6 +42,23 @@ export class FindManyReportsUseCase {
             totalConfirmations: true,
             userId: true,
             categoryId: true,
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                username: true,
+                avatarSeed: true,
+                avatarKey: true,
+              },
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                colorHex: true,
+                isRisk: true,
+              },
+            },
             media: {
               orderBy: { createdAt: 'asc' },
               take: 1,
@@ -86,6 +103,8 @@ export class FindManyReportsUseCase {
         id: report.id,
         confirmations: report.totalConfirmations,
         categoryId: report.categoryId,
+        category: report.category,
+        user: report.user,
         latitude: report.latitude,
         longitude: report.longitude,
         image: report.media[0]

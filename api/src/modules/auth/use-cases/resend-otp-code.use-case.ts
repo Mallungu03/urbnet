@@ -25,6 +25,21 @@ export class resendOtpCodeUseCase {
       throw new NotFoundException('Nenhuma conta pendente para este email.');
     }
 
+    // Rate limiting: máximo 3 OTPs por hora por usuário
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentOtpsCount = await this.prisma.otp.count({
+      where: {
+        userId: userAlreadExistis.id,
+        createdAt: { gte: oneHourAgo },
+      },
+    });
+
+    if (recentOtpsCount >= 3) {
+      throw new NotFoundException(
+        'Muitas tentativas. Tente novamente em 1 hora.',
+      );
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     await this.prisma.otp.create({

@@ -70,7 +70,6 @@ export class AuthController {
 
   @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @Public()
-  @Throttle({ default: { ttl: 60000, limit: 3, blockDuration: 180000 } })
   @HttpCode(HttpStatus.OK)
   @Post('sign-in')
   async signIn(@Body() signInDto: SignInDto) {

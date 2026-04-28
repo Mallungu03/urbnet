@@ -57,7 +57,9 @@ const normalizeMessage = (
 export class AllExceptionsFilter<T> implements ExceptionFilter {
   catch(exception: T, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const response = ctx.getResponse();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const request = ctx.getRequest();
 
     const status =
@@ -100,9 +102,12 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
         type: errorType,
         message,
       },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       path: request.url,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       method: request.method,
       timestamp: new Date().toISOString(),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       requestId: request.id,
     };
 
@@ -114,6 +119,7 @@ export class AllExceptionsFilter<T> implements ExceptionFilter {
     if (details) {
       payload.error.details = details;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     response.status(status).send(payload);
   }
 }

@@ -34,11 +34,20 @@ async function bootstrap() {
     }),
   );
 
-  app.use(compression());
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'https://reporta.ao',
+      'https://app.reporta.ao',
+    ], // Whitelist de origins
+    credentials: true,
+  });
   app.use(
     '/uploads',
     express.static(join(process.cwd(), 'storage', 'uploads')),
   );
+
+  app.use(compression());
 
   const env = app.get(EnvService);
 
