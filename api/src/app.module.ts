@@ -11,6 +11,7 @@ import { EnvModule } from './config/env/env.module';
 import { PrismaModule } from './config/db/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { EnvService } from './config/env/env.service';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EnvService } from './config/env/env.service';
         ],
       }),
     }),
+    EventsModule,
     PrismaModule,
     AdminModule,
     AuthModule,
