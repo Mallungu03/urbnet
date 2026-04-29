@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,8 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 
 @Injectable()
 export class CreateCategoryUseCase {
+  private logger = new Logger(CreateCategoryUseCase.name);
+
   constructor(private readonly prisma: PrismaService) {}
   async execute(id: string, createAdminDto: CreateCategoryDto) {
     const name = String(createAdminDto.name);
@@ -55,5 +58,7 @@ export class CreateCategoryUseCase {
         },
       },
     });
+
+    this.logger.log(`Categoria com id ${category.id} criada`);
   }
 }

@@ -62,7 +62,7 @@ export class ResetPasswordUseCase {
 
       const user = await prisma.user.update({
         where: { id: userAlreadyExists.id },
-        data: { passwordHash },
+        data: { password: passwordHash },
       });
 
       // Revogar todos os refresh tokens do usuário para segurança

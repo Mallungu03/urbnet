@@ -5,18 +5,6 @@ import { PrismaService } from '@/config/db/prisma.service';
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findMany() {
-    return `This action returns all admin`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} admin`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} admin`;
-  }
-
   async generateSlugDeleted(name: string): Promise<string> {
     const base = name
       .normalize('NFD')

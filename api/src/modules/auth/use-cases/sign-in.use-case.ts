@@ -53,7 +53,7 @@ export class SignInUseCase {
     }
 
     const isPasswordValid = await argon2.verify(
-      userAllreadyExists.passwordHash,
+      userAllreadyExists.password,
       password,
     );
 

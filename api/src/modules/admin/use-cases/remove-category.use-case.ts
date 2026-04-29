@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,8 @@ import { AuditActorType } from '@/generated/enums';
 
 @Injectable()
 export class RemoveCategoryUseCase {
+  private logger = new Logger(RemoveCategoryUseCase.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminService: AdminService,
@@ -58,5 +61,7 @@ export class RemoveCategoryUseCase {
         },
       },
     });
+
+    this.logger.log(`Categoria com id ${categoryDeleted.id} eliminada`);
   }
 }

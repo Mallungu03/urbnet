@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,16 +12,18 @@ import { PrismaService } from '@/config/db/prisma.service';
 export class AlterUserRoleUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
-  async execute(userId: string, id: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId, isBanned: false, deletedAt: null },
+  private logger = new Logger(AlterUserRoleUseCase.name);
+
+  async execute(adminId: string, id: string) {
+    const admin = await this.prisma.user.findUnique({
+      where: { id: adminId, isBanned: false, deletedAt: null },
     });
 
-    if (!user) {
+    if (!admin) {
       throw new NotFoundException();
     }
 
-    if (user.role !== UserRole.admin) {
+    if (admin.role !== UserRole.admin) {
       throw new UnauthorizedException();
     }
 
@@ -48,17 +51,18 @@ export class AlterUserRoleUseCase {
         entityType: 'user',
         entityId: updatedUser.id,
         actorType: AuditActorType.admin,
-        actorId: user.id,
+        actorId: admin.id,
         payload: {
-          message:
-            nextRole === UserRole.admin
-              ? 'Permissao de admin concedida.'
-              : 'Permissao de admin removida.',
+          message: `Usuario com permissoes de  ${nextRole} concedidas`,
           previousRole: userToAlterRole.role,
           newRole: nextRole,
         },
       },
     });
+
+    this.logger.log(
+      `Usuario com id ${userToAlterRole.id} com permissões de ${nextRole} concedidada`,
+    );
 
     return {
       id: updatedUser.id,

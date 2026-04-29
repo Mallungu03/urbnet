@@ -9,15 +9,14 @@ import { PrismaService } from '@/config/db/prisma.service';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import sharp from 'sharp';
 import { randomUUID } from 'node:crypto';
-import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import { UploadService } from '@/modules/upload/upload.service';
 import { UsersService } from '../services/users.service';
 
 @Injectable()
 export class UpdateUserUseCase {
   constructor(
     private readonly prisma: PrismaService,
-
-    private readonly userAvatarStorage: UserAvatarStorageService,
+    private readonly uploadService: UploadService,
     private readonly usersService: UsersService,
   ) {}
 
@@ -87,11 +86,13 @@ export class UpdateUserUseCase {
         .jpeg({ quality: 82 })
         .toBuffer();
 
-      nextAvatarFileKey = `avatars/${userAlreadExistis.id}/${randomUUID()}.jpg`;
-      await this.userAvatarStorage.saveAvatar(
-        nextAvatarFileKey,
+      nextAvatarFileKey = `avatars/${userAlreadExistis.id}/${randomUUID()}`;
+      const uploadResult = await this.uploadService.uploadBuffer(
         optimizedBuffer,
+        'avatars',
+        nextAvatarFileKey,
       );
+      nextAvatarFileKey = uploadResult.public_id;
       dataToUpdate.avatarKey = nextAvatarFileKey;
       previousAvatarKeyToDelete = userAlreadExistis.avatarKey;
     }
@@ -110,7 +111,7 @@ export class UpdateUserUseCase {
         });
       } catch (error) {
         if (nextAvatarFileKey) {
-          await this.userAvatarStorage.deleteAvatar(nextAvatarFileKey);
+          await this.uploadService.deleteFile(nextAvatarFileKey);
         }
 
         throw error;
@@ -121,7 +122,7 @@ export class UpdateUserUseCase {
       previousAvatarKeyToDelete &&
       previousAvatarKeyToDelete !== nextAvatarFileKey
     ) {
-      await this.userAvatarStorage.deleteAvatar(previousAvatarKeyToDelete);
+      await this.uploadService.deleteFile(previousAvatarKeyToDelete);
     }
 
     await this.prisma.auditLog.create({
@@ -140,12 +141,12 @@ export class UpdateUserUseCase {
       avatar: this.usersService.buildAvatarValue(
         user.avatarSeed,
         user.avatarKey,
-        this.userAvatarStorage,
+        this.uploadService,
       ),
       avatarSeed: user.avatarSeed,
       avatarUrl: this.usersService.buildAvatarUrl(
         user.avatarKey,
-        this.userAvatarStorage,
+        this.uploadService,
       ),
       email: user.email,
       fullName: user.fullName,

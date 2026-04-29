@@ -37,7 +37,7 @@ export class RegisterUseCase {
         data: {
           email,
           fullName,
-          passwordHash,
+          password: passwordHash,
           username,
         },
       });

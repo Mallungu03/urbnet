@@ -53,5 +53,11 @@ export default () => {
       blockDuration:
         parseInt(process.env.RATE_BLOCK_DURATION ?? '180', 10) * 1000,
     },
+
+    cloudinary: {
+      name: process.env.CLOUDINARY_NAME,
+      key: process.env.CLOUDINARY_KEY,
+      secret: process.env.CLOUDINARY_SECRET,
+    },
   };
 };

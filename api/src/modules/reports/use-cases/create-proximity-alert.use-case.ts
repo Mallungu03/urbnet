@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/config/db/prisma.service';
 import { CreateProximityAlertDto } from '../dto/create-proximity-alert.dto';
-import { AlertsService } from '../alerts.service';
+import { AlertsService } from '../reports.service';
 
 @Injectable()
 export class CreateProximityAlertUseCase {

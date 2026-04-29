@@ -8,15 +8,14 @@ import { CreateReportDto } from '../dto/create-report.dto';
 import { PrismaService } from '@/config/db/prisma.service';
 import {} from 'multer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { randomUUID } from 'node:crypto';
-import { ReportMediaStorageService } from '../services/report-media-storage.service';
+import { UploadService } from '@/modules/upload/upload.service';
 
 @Injectable()
 export class CreateReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmmitter: EventEmitter2,
-    private readonly reportMediaStorage: ReportMediaStorageService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async execute(
@@ -60,9 +59,13 @@ export class CreateReportUseCase {
     const width = metadata.width ?? null;
     const height = metadata.height ?? null;
     const fileSizeKb = Math.ceil(optimizedBuffer.length / 1024);
-    const fileKey = `reports/${userId}/${randomUUID()}.jpg`;
-
-    await this.reportMediaStorage.saveReportImage(fileKey, optimizedBuffer);
+    const publicId = `uploads/reports/${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const uploadResult = await this.uploadService.uploadBuffer(
+      optimizedBuffer,
+      'uploads/reports',
+      publicId,
+    );
+    const fileKey = uploadResult.public_id;
 
     try {
       const report = await this.prisma.$transaction(async (prisma) => {
@@ -104,11 +107,6 @@ export class CreateReportUseCase {
             payload: {
               message: 'Report criado.',
               categoryId,
-              fileKey,
-              mimeType: 'image/jpeg',
-              fileSizeKb,
-              widthPx: width,
-              heightPx: height,
             },
           },
         });
@@ -132,7 +130,7 @@ export class CreateReportUseCase {
         longitude,
         image: {
           key: fileKey,
-          url: this.reportMediaStorage.getPublicUrl(fileKey),
+          url: this.uploadService.getPublicUrl(fileKey),
           mimeType: 'image/jpeg',
           fileSizeKb,
           widthPx: width,
@@ -141,7 +139,7 @@ export class CreateReportUseCase {
         createdAt: report.createdAt,
       };
     } catch (error) {
-      await this.reportMediaStorage.deleteReportImage(fileKey);
+      await this.uploadService.deleteFile(fileKey);
       throw error;
     }
   }

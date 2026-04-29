@@ -31,4 +31,9 @@ export const validationSchema = Joi.object({
   SMTP_USER: Joi.string().required(),
   SMTP_PASS: Joi.string().required(),
   SMTP_FROM: Joi.string().email().required(),
+
+  // Storage
+  CLOUDINARY_NAME: Joi.string().required(),
+  CLOUDINARY_KEY: Joi.string().required(),
+  CLOUDINARY_SECRET: Joi.string().required(),
 });

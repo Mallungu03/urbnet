@@ -5,18 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import sharp from 'sharp';
-import { randomUUID } from 'node:crypto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '@/config/db/prisma.service';
-import { ReportMediaStorageService } from '../services/report-media-storage.service';
 import { UpdateReportDto } from '../dto/update-report.dto';
+import { UploadService } from '@/modules/upload/upload.service';
 
 @Injectable()
 export class UpdateReportUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly reportMediaStorage: ReportMediaStorageService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async execute(
@@ -76,21 +75,21 @@ export class UpdateReportUseCase {
       );
     }
 
-    const nextCategoryId =
+    const categoryId =
       dto.categoryId !== undefined ? Number(dto.categoryId) : report.categoryId;
-    const nextContent =
+    const content =
       dto.content !== undefined ? String(dto.content).trim() : report.content;
-    const nextLatitude =
+    const newLatitude =
       dto.latitude !== undefined
         ? Number(dto.latitude)
         : Number(currentLocation.latitude);
-    const nextLongitude =
+    const newLongitude =
       dto.longitude !== undefined
         ? Number(dto.longitude)
         : Number(currentLocation.longitude);
 
     const category = await this.prisma.category.findFirst({
-      where: { id: nextCategoryId, isActive: true, deletedAt: null },
+      where: { id: categoryId, isActive: true, deletedAt: null },
     });
 
     if (!category) {
@@ -98,28 +97,28 @@ export class UpdateReportUseCase {
     }
 
     const changedFields: string[] = [];
-    let nextFileKey: string | null = null;
+    let newFileKey;
     let previousFileKeyToDelete: string | null = null;
-    let nextFileMetadata: {
+    let newFileMetadata: {
       mimeType: string;
       fileSizeKb: number;
       widthPx: number | null;
       heightPx: number | null;
     } | null = null;
 
-    if (dto.categoryId !== undefined && nextCategoryId !== report.categoryId) {
+    if (dto.categoryId !== undefined && categoryId !== report.categoryId) {
       changedFields.push('categoryId');
     }
 
-    if (dto.content !== undefined && nextContent !== report.content) {
+    if (dto.content !== undefined && content !== report.content) {
       changedFields.push('content');
     }
 
-    if (nextLatitude !== Number(currentLocation.latitude)) {
+    if (newLatitude !== Number(currentLocation.latitude)) {
       changedFields.push('latitude');
     }
 
-    if (nextLongitude !== Number(currentLocation.longitude)) {
+    if (newLongitude !== Number(currentLocation.longitude)) {
       changedFields.push('longitude');
     }
 
@@ -132,30 +131,23 @@ export class UpdateReportUseCase {
         .jpeg({ quality: 80 })
         .toBuffer();
 
-      nextFileKey = `reports/${userId}/${randomUUID()}.jpg`;
-      nextFileMetadata = {
+      const publicId = `uploads/reports/${report.id}/${Date.now()}`;
+      const uploadResult = await this.uploadService.uploadBuffer(
+        optimizedBuffer,
+        'uploads/reports',
+        publicId,
+      );
+      newFileKey = uploadResult.public_id;
+
+      newFileMetadata = {
         mimeType: 'image/jpeg',
         fileSizeKb: Math.ceil(optimizedBuffer.length / 1024),
         widthPx: metadata.width ?? null,
         heightPx: metadata.height ?? null,
       };
 
-      await this.reportMediaStorage.saveReportImage(
-        nextFileKey,
-        optimizedBuffer,
-      );
       previousFileKeyToDelete = report.media[0]?.s3Key ?? null;
       changedFields.push('image');
-    }
-
-    if (changedFields.length === 0) {
-      if (nextFileKey) {
-        await this.reportMediaStorage.deleteReportImage(nextFileKey);
-      }
-
-      throw new BadRequestException(
-        'Nenhuma alteração válida foi identificada para o report.',
-      );
     }
 
     try {
@@ -163,47 +155,47 @@ export class UpdateReportUseCase {
         await prisma.report.update({
           where: { id: report.id },
           data: {
-            categoryId: nextCategoryId,
-            content: nextContent,
+            categoryId: categoryId,
+            content: content,
           },
         });
 
         if (
-          nextLatitude !== Number(currentLocation.latitude) ||
-          nextLongitude !== Number(currentLocation.longitude)
+          newLatitude !== Number(currentLocation.latitude) ||
+          newLongitude !== Number(currentLocation.longitude)
         ) {
           await prisma.$executeRaw`
             UPDATE "Report"
             SET
-              "location" = ST_SetSRID(ST_MakePoint(${nextLongitude}, ${nextLatitude}), 4326),
+              "location" = ST_SetSRID(ST_MakePoint(${newLongitude}, ${newLatitude}), 4326),
               "updatedAt" = NOW()
             WHERE "id" = ${report.id}
           `;
         }
 
-        if (nextFileKey && nextFileMetadata) {
+        if (newFileKey && newFileMetadata) {
           const currentMedia = report.media[0];
 
           if (currentMedia) {
             await prisma.reportMedia.update({
               where: { id: currentMedia.id },
               data: {
-                s3Key: nextFileKey,
-                mimeType: nextFileMetadata.mimeType,
-                fileSizeKb: nextFileMetadata.fileSizeKb,
-                widthPx: nextFileMetadata.widthPx,
-                heightPx: nextFileMetadata.heightPx,
+                s3Key: newFileKey,
+                mimeType: newFileMetadata.mimeType,
+                fileSizeKb: newFileMetadata.fileSizeKb,
+                widthPx: newFileMetadata.widthPx,
+                heightPx: newFileMetadata.heightPx,
               },
             });
           } else {
             await prisma.reportMedia.create({
               data: {
                 reportId: report.id,
-                s3Key: nextFileKey,
-                mimeType: nextFileMetadata.mimeType,
-                fileSizeKb: nextFileMetadata.fileSizeKb,
-                widthPx: nextFileMetadata.widthPx,
-                heightPx: nextFileMetadata.heightPx,
+                s3Key: newFileKey,
+                mimeType: newFileMetadata.mimeType,
+                fileSizeKb: newFileMetadata.fileSizeKb,
+                widthPx: newFileMetadata.widthPx,
+                heightPx: newFileMetadata.heightPx,
               },
             });
           }
@@ -219,37 +211,37 @@ export class UpdateReportUseCase {
             payload: {
               message: 'Report atualizado.',
               fields: changedFields,
-              categoryId: nextCategoryId,
-              latitude: nextLatitude,
-              longitude: nextLongitude,
-              imageKey: nextFileKey,
+              categoryId: categoryId,
+              latitude: newLatitude,
+              longitude: newLongitude,
+              imageKey: newFileKey,
             },
           },
         });
       });
     } catch (error) {
-      if (nextFileKey) {
-        await this.reportMediaStorage.deleteReportImage(nextFileKey);
+      if (newFileKey) {
+        await this.uploadService.deleteFile(newFileKey);
       }
 
       throw error;
     }
 
-    if (previousFileKeyToDelete && previousFileKeyToDelete !== nextFileKey) {
-      await this.reportMediaStorage.deleteReportImage(previousFileKeyToDelete);
+    if (previousFileKeyToDelete) {
+      await this.uploadService.deleteFile(previousFileKeyToDelete);
     }
 
     const shouldSyncRiskAlertZone =
       category.isRisk === true &&
       (!report.category.isRisk ||
-        nextLatitude !== Number(currentLocation.latitude) ||
-        nextLongitude !== Number(currentLocation.longitude));
+        newLatitude !== Number(currentLocation.latitude) ||
+        newLongitude !== Number(currentLocation.longitude));
 
     if (shouldSyncRiskAlertZone) {
       this.eventEmitter.emit('report.updated-risk', {
         reportId: report.id,
-        latitude: nextLatitude,
-        longitude: nextLongitude,
+        latitude: newLatitude,
+        longitude: newLongitude,
       });
     }
 
@@ -261,32 +253,29 @@ export class UpdateReportUseCase {
 
     return {
       id: report.id,
-      categoryId: nextCategoryId,
-      content: nextContent,
-      latitude: nextLatitude,
-      longitude: nextLongitude,
-      image:
-        nextFileKey && nextFileMetadata
-          ? {
-              key: nextFileKey,
-              url: this.reportMediaStorage.getPublicUrl(nextFileKey),
-              mimeType: nextFileMetadata.mimeType,
-              fileSizeKb: nextFileMetadata.fileSizeKb,
-              widthPx: nextFileMetadata.widthPx,
-              heightPx: nextFileMetadata.heightPx,
-            }
-          : report.media[0]
-            ? {
-                key: report.media[0].s3Key,
-                url: this.reportMediaStorage.getPublicUrl(
-                  report.media[0].s3Key,
-                ),
-                mimeType: report.media[0].mimeType,
-                fileSizeKb: report.media[0].fileSizeKb,
-                widthPx: report.media[0].widthPx,
-                heightPx: report.media[0].heightPx,
-              }
-            : null,
+      categoryId: categoryId,
+      content: content,
+      latitude: newLatitude,
+      longitude: newLongitude,
+      image: newFileKey
+        ? {
+            key: newFileKey,
+            url: this.uploadService.getPublicUrl(newFileKey),
+            mimeType: newFileMetadata!.mimeType,
+            fileSizeKb: newFileMetadata!.fileSizeKb,
+            widthPx: newFileMetadata!.widthPx,
+            heightPx: newFileMetadata!.heightPx,
+          }
+        : report.media[0]
+        ? {
+            key: report.media[0].s3Key,
+            url: this.uploadService.getPublicUrl(report.media[0].s3Key),
+            mimeType: report.media[0].mimeType,
+            fileSizeKb: report.media[0].fileSizeKb,
+            widthPx: report.media[0].widthPx,
+            heightPx: report.media[0].heightPx,
+          }
+        : null,
     };
   }
 }

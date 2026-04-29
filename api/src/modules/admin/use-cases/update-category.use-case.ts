@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,6 +14,8 @@ import { AuditActorType } from '@/generated/enums';
 
 @Injectable()
 export class UpdateCategoryUseCase {
+  private logger = new Logger(UpdateCategoryUseCase.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(
@@ -99,6 +102,10 @@ export class UpdateCategoryUseCase {
           fields: Object.keys(dataToUpdate),
         },
       },
+    });
+    this.logger.log({
+      message: `Categoria com id ${categoryUpdated.id} atualizada`,
+      data: dataToUpdate,
     });
   }
 }

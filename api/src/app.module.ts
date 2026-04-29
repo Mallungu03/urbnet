@@ -6,12 +6,12 @@ import { AuthGuard } from './shared/guards/auth.guard';
 import { NotificationModule } from './modules/notification/notification.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ReportsModule } from './modules/reports/reports.module';
-import { AlertsModule } from './modules/alerts/alerts.module';
 import { EnvModule } from './config/env/env.module';
 import { PrismaModule } from './config/db/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { EnvService } from './config/env/env.service';
 import { EventsModule } from './modules/events/events.module';
+import { CloudinaryModule } from './modules/upload/cloudnary.module';
 
 @Module({
   imports: [
@@ -36,7 +36,7 @@ import { EventsModule } from './modules/events/events.module';
     ReportsModule,
     EnvModule,
     NotificationModule,
-    AlertsModule,
+    CloudinaryModule,
   ],
   providers: [{ provide: 'APP_GUARD', useClass: AuthGuard }],
 })

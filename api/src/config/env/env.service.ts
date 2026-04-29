@@ -81,4 +81,16 @@ export class EnvService {
   get rateBlockDuration(): number {
     return this.config.get<number>('throttler.blockDuration') ?? 180000;
   }
+
+  get cloudinaryName(): StringValue {
+    return this.config.get<string>('cloudinary.name') as StringValue;
+  }
+
+  get cloudinaryKey(): StringValue {
+    return this.config.get<string>('cloudinary.key') as StringValue;
+  }
+
+  get cloudinarySecret(): StringValue {
+    return this.config.get<string>('cloudinary.secret') as StringValue;
+  }
 }

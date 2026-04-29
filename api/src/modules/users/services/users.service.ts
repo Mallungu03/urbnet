@@ -45,7 +45,7 @@ export class UsersService {
 
   buildAvatarUrl(
     avatarKey: string | null | undefined,
-    storage: UserAvatarStorageService,
+    storage: { getPublicUrl: (key: string) => string },
   ) {
     return avatarKey ? storage.getPublicUrl(avatarKey) : null;
   }
@@ -53,7 +53,7 @@ export class UsersService {
   buildAvatarValue(
     avatarSeed: string | null | undefined,
     avatarKey: string | null | undefined,
-    storage: UserAvatarStorageService,
+    storage: { getPublicUrl: (key: string) => string },
   ) {
     return avatarKey ? storage.getPublicUrl(avatarKey) : (avatarSeed ?? null);
   }

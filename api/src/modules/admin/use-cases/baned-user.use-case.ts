@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,6 +12,8 @@ import type { User } from '@/generated/client';
 
 @Injectable()
 export class BanedUserUseCase {
+  private logger = new Logger(BanedUserUseCase.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
@@ -51,6 +54,8 @@ export class BanedUserUseCase {
         fullName: userToAlterRole.fullName,
         role: userToAlterRole.role,
       });
+
+      this.logger.log(`Usuario com id ${updatedUser.id} banido`);
     } else {
       updatedUser = await this.prisma.user.update({
         where: { id: userToAlterRole.id },
@@ -61,6 +66,7 @@ export class BanedUserUseCase {
         email: userToAlterRole.email,
         fullName: userToAlterRole.fullName,
       });
+      this.logger.log(`Usuario com id ${updatedUser.id} reativado`);
     }
 
     await this.prisma.auditLog.create({

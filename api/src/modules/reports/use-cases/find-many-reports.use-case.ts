@@ -1,13 +1,13 @@
 import { PrismaService } from '@/config/db/prisma.service';
 import { FindManyQuery } from '@/shared/queries/find-many.query';
 import { Injectable } from '@nestjs/common';
-import { ReportMediaStorageService } from '../services/report-media-storage.service';
+import { UploadService } from '@/modules/upload/upload.service';
 
 @Injectable()
 export class FindManyReportsUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly reportMediaStorage: ReportMediaStorageService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async execute(query: FindManyQuery) {
@@ -110,7 +110,7 @@ export class FindManyReportsUseCase {
         image: report.media[0]
           ? {
               key: report.media[0].s3Key,
-              url: this.reportMediaStorage.getPublicUrl(report.media[0].s3Key),
+              url: this.uploadService.getPublicUrl(report.media[0].s3Key),
               mimeType: report.media[0].mimeType,
               fileSizeKb: report.media[0].fileSizeKb,
               widthPx: report.media[0].widthPx,

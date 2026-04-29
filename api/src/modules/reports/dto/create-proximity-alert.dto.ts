@@ -3,9 +3,9 @@ import { IsLatitude, IsLongitude, IsNotEmpty } from 'class-validator';
 export class CreateProximityAlertDto {
   @IsLatitude()
   @IsNotEmpty()
-  latitude: number;
+  latitude;
 
   @IsLongitude()
   @IsNotEmpty()
-  longitude: number;
+  longitude;
 }

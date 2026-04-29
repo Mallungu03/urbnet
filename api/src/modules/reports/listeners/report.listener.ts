@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { AlertsService } from '../alerts.service';
+import { AlertsService } from '../reports.service';
 import { PrismaService } from '@/config/db/prisma.service';
 
 @Injectable()

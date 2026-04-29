@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/config/db/prisma.service';
 import { FindManyQuery } from '@/shared/queries/find-many.query';
-import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import { UploadService } from '@/modules/upload/upload.service';
 import { UsersService } from '../services/users.service';
 
 @Injectable()
 export class FindManyUsersUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly userAvatarStorage: UserAvatarStorageService,
+    private readonly uploadService: UploadService,
     private readonly userService: UsersService,
   ) {}
 
@@ -61,7 +61,7 @@ export class FindManyUsersUseCase {
         avatarSeed: user.avatarSeed,
         avatarUrl: this.userService.buildAvatarUrl(
           user.avatarKey,
-          this.userAvatarStorage,
+          this.uploadService,
         ),
         createdAt: user.createdAt,
       })),

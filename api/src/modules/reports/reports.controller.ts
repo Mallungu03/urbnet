@@ -13,6 +13,7 @@ import {
   ParseFilePipeBuilder,
   ParseUUIDPipe,
   Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateReportDto } from './dto/create-report.dto';
@@ -26,6 +27,10 @@ import { FindManyReportsUseCase } from './use-cases/find-many-reports.use-case';
 import { ConfirmReportUseCase } from './use-cases/confirm-report.use-case';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { UpdateReportUseCase } from './use-cases/update-report.use-case';
+import { CreateProximityAlertUseCase } from './use-cases/create-proximity-alert.use-case';
+import { FindManyAlertZonesUseCase } from './use-cases/find-many-alert-zones.use-case';
+import { FindUniqueAlertZoneUseCase } from './use-cases/find-unique-alert-zones.use-case';
+import { CreateProximityAlertDto } from './dto/create-proximity-alert.dto';
 
 @Controller('reports')
 export class ReportsController {
@@ -36,6 +41,9 @@ export class ReportsController {
     private readonly deleteReportUseCase: DeleteReportUseCase,
     private readonly findUniqueReportUseCase: FindUniqueReportUseCase,
     private readonly findManyReportsUseCase: FindManyReportsUseCase,
+    private readonly createProximityAlertUseCase: CreateProximityAlertUseCase,
+    private readonly findManyUseCase: FindManyAlertZonesUseCase,
+    private readonly findUniqueUseCase: FindUniqueAlertZoneUseCase,
   ) {}
 
   @HttpCode(HttpStatus.CREATED)
@@ -102,5 +110,30 @@ export class ReportsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return await this.deleteReportUseCase.execute(user.sub, id);
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @Post()
+  createProximityAlert(
+    @CurrentUser() user: IJwtPayload,
+    @Body() param: CreateProximityAlertDto,
+  ) {
+    return this.createProximityAlertUseCase.execute(user.sub, param);
+  }
+
+  @HttpCode(HttpStatus.FOUND)
+  @Get('find-many')
+  findManyAlerts(
+    @CurrentUser() user: IJwtPayload,
+    @Query('page', ParseIntPipe) page?: number,
+    @Query('limit', ParseIntPipe) limit?: number,
+  ) {
+    return this.findManyUseCase.execute(user.sub, { page, limit });
+  }
+
+  @HttpCode(HttpStatus.FOUND)
+  @Get(':id')
+  findUniqueAlerts(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
+    return this.findUniqueUseCase.execute(user.sub, id);
   }
 }

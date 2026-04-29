@@ -27,7 +27,7 @@ export class ChangePasswordUseCase {
     const oldPassword = String(changePasswordDto.oldPassword);
 
     const oldPasswordHash = await argon2.verify(
-      userAlreadyExists.passwordHash,
+      userAlreadyExists.password,
       oldPassword,
     );
 
@@ -39,7 +39,7 @@ export class ChangePasswordUseCase {
 
     await this.prisma.user.update({
       where: { email: email },
-      data: { passwordHash },
+      data: { password: passwordHash },
     });
 
     await this.prisma.auditLog.create({

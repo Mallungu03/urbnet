@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/config/db/prisma.service';
-import { UserAvatarStorageService } from '../services/user-avatar-storage.service';
+import { UploadService } from '@/modules/upload/upload.service';
 import { UsersService } from '../services/users.service';
 
 @Injectable()
 export class FindUniqueUserUseCase {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly userAvatarStorage: UserAvatarStorageService,
+    private readonly uploadService: UploadService,
     private readonly usersService: UsersService,
   ) {}
 
@@ -33,12 +33,12 @@ export class FindUniqueUserUseCase {
       avatar: this.usersService.buildAvatarValue(
         userAlreadExistis.avatarSeed,
         userAlreadExistis.avatarKey,
-        this.userAvatarStorage,
+        this.uploadService,
       ),
       avatarSeed: userAlreadExistis.avatarSeed,
       avatarUrl: this.usersService.buildAvatarUrl(
         userAlreadExistis.avatarKey,
-        this.userAvatarStorage,
+        this.uploadService,
       ),
     };
   }
